@@ -7,24 +7,17 @@ ua = UserAgent()
 
 class NBCNewsSpider(NewsSpider):
     name = "nbcnews"
+    domain = "nbcnews.com"
     allowed_domains = ["nbcnews.com"]
-    start_urls = ["https://nbcnews.com"]
-
-    custom_settings = {
-        'USER_AGENT': ua.get_random_user_agent(),
-        'ROBOTSTXT_OBEY': True,
-        "DEPTH_LIMIT": 1,
-    }
-
-    articles = []
-    titles = []
-
-    articles_processed = 0
-    max_articles = 20
+    start_urls = [
+        "https://www.nbcnews.com",
+        "https://www.nbcnews.com/us-news",
+        "https://www.nbcnews.com/politics",
+    ]
 
     def is_article_page(self, response):
         # This method checks if the "class" attribute of the <body> tag contains "articlePage"
         # Using XPath to select the body tag and extract the class attribute
-        body_class = response.xpath('//body/@class').get()
+        body_class = response.xpath("//body/@class").get()
         # Checking if "articlePage news savory" is in the class attribute
         return "articlePage news savory" in body_class if body_class else False
