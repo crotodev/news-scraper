@@ -17,7 +17,7 @@ class NewsSpider(scrapy.Spider):
     custom_settings = {
         "USER_AGENT": ua.get_random_user_agent(),
         "ROBOTSTXT_OBEY": True,
-        "DEPTH_LIMIT": 2,
+        "DEPTH_LIMIT": 1,
     }
 
     def parse(self, response):

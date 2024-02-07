@@ -1,0 +1,2 @@
+# News Webscraper
+This is a web scraper for scrapy news and storing it in a database in its raw form. The scraper is built using scrapy and the database is built using sqlite3. The scraper is built to scrape news from the following websites: Fox News, NBC News, and CNN. 
