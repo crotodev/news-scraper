@@ -9,6 +9,9 @@ from news.spiders.cnn import CNNSpider
 from news.spiders.foxnews import FoxNewsSpider
 from news.spiders.nbcnews import NBCNewsSpider
 
+if not os.path.exists("./data"):
+    os.mkdir("./data")
+
 process = CrawlerProcess(settings=get_project_settings())
 process.crawl(FoxNewsSpider)
 process.crawl(NBCNewsSpider)
