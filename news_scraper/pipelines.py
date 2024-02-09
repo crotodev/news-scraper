@@ -33,7 +33,7 @@ from itemadapter import ItemAdapter
 #         if not os.path.exists("./data"):
 #             os.makedirs("./data")
 #
-#         path = os.path.join("./data", "news.db")
+#         path = os.path.join("./data", "news_scraper.db")
 #         self.conn = sqlite3.connect(path, timeout=20)
 #         self.conn.execute("PRAGMA journal_mode=WAL;")
 #
@@ -52,7 +52,7 @@ class FilePipeline:
         self.file = None
 
     def open_spider(self, spider):
-        path = os.path.join("./data", f"{spider.name}_items.jsonl")
+        path = os.path.join(".", "data", f"{spider.name}_items.jsonl")
         self.file = open(path, "w")
 
     def close_spider(self, spider):

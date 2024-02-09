@@ -3,14 +3,14 @@ from datetime import datetime
 import scrapy
 from random_user_agent.user_agent import UserAgent
 from newspaper import Article
-from news.items import NewsItem
+from news_scraper.items import NewsItem
 
 
 ua = UserAgent()
 
 
 class NewsSpider(scrapy.Spider):
-    name = "news"
+    name = "news_scraper"
     domain = ""
     allowed_domains = []
 

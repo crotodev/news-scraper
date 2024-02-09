@@ -5,12 +5,14 @@ import sqlite3
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
-from news.spiders.cnn import CNNSpider
-from news.spiders.foxnews import FoxNewsSpider
-from news.spiders.nbcnews import NBCNewsSpider
+from news_scraper.spiders.cnn import CNNSpider
+from news_scraper.spiders.foxnews import FoxNewsSpider
+from news_scraper.spiders.nbcnews import NBCNewsSpider
 
-if not os.path.exists("./data"):
-    os.mkdir("./data")
+data_path = os.path.join(".", "data")
+
+if not os.path.exists(data_path):
+    os.mkdir(data_path)
 
 process = CrawlerProcess(settings=get_project_settings())
 process.crawl(FoxNewsSpider)
@@ -20,9 +22,9 @@ process.start()
 
 items = []
 
-cnn_path = os.path.join("./data", "cnn_items.jsonl")
-foxnews_path = os.path.join("./data", "foxnews_items.jsonl")
-nbcnews_path = os.path.join("./data", "nbcnews_items.jsonl")
+cnn_path = os.path.join(".", "data", "cnn_items.jsonl")
+foxnews_path = os.path.join(".", "data", "foxnews_items.jsonl")
+nbcnews_path = os.path.join(".", "data", "nbcnews_items.jsonl")
 
 paths = [cnn_path, foxnews_path, nbcnews_path]
 
@@ -55,7 +57,7 @@ for path in paths:
     os.remove(path)
 
 # Create a connection to the database and insert the items
-conn = sqlite3.connect(os.path.join("./data", "news.db"), timeout=20)
+conn = sqlite3.connect(os.path.join(".", "data", "news_scraper.db"), timeout=20)
 conn.execute("PRAGMA journal_mode=WAL;")
 conn.execute(
     "CREATE TABLE IF NOT EXISTS raw_news "

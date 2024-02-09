@@ -1,6 +1,6 @@
 from random_user_agent.user_agent import UserAgent
 
-from news.spiders.newsspider import NewsSpider
+from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
 
@@ -19,5 +19,5 @@ class NBCNewsSpider(NewsSpider):
         # This method checks if the "class" attribute of the <body> tag contains "articlePage"
         # Using XPath to select the body tag and extract the class attribute
         body_class = response.xpath("//body/@class").get()
-        # Checking if "articlePage news savory" is in the class attribute
-        return "articlePage news savory" in body_class if body_class else False
+        # Checking if "articlePage news_scraper savory" is in the class attribute
+        return "articlePage news_scraper savory" in body_class if body_class else False

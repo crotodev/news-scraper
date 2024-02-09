@@ -1,6 +1,6 @@
 from random_user_agent.user_agent import UserAgent
 
-from news.spiders.newsspider import NewsSpider
+from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
 
