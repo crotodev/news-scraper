@@ -2,7 +2,7 @@ from datetime import datetime
 
 import scrapy
 from random_user_agent.user_agent import UserAgent
-from newspaper import Article
+from newspaper import Article, Config
 from news_scraper.items import NewsItem
 
 
@@ -13,17 +13,21 @@ class NewsSpider(scrapy.Spider):
     name = "news_scraper"
     domain = ""
     allowed_domains = []
+    random_ua = ua.get_random_user_agent()
+
+    config = Config()
+    config.browser_user_agent = random_ua
 
     custom_settings = {
-        "USER_AGENT": ua.get_random_user_agent(),
+        "USER_AGENT": random_ua,
         "ROBOTSTXT_OBEY": True,
         "DEPTH_LIMIT": 1,
-        "CONCURRENT_REQUESTS": 32
+        "CONCURRENT_REQUESTS": 32,
     }
 
     def parse(self, response):
         if self.is_article_page(response):
-            item = self.process_article(response, self.domain)
+            item = self.process_article(response, self.domain, self.config)
             yield item
 
         for href in response.xpath("//a/@href").getall():
@@ -45,15 +49,19 @@ class NewsSpider(scrapy.Spider):
         return True
 
     @staticmethod
-    def process_article(response, source):
-        a = Article(response.url)
+    def process_article(response, source, config):
+        a = Article(response.url, config=config)
         a.download()
         a.parse()
+        a.nlp()
 
         item = NewsItem()
         item["title"] = a.title
+        item["author"] = a.authors[0] if a.authors else ""
         item["text"] = a.text
+        item["summary"] = a.summary
         item["url"] = response.url
         item["source"] = source
+        item["published_at"] = a.publish_date.isoformat() if a.publish_date else ""
         item["scraped_at"] = datetime.now().isoformat()
         return item
