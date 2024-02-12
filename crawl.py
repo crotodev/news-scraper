@@ -57,7 +57,7 @@ for path in paths:
     os.remove(path)
 
 # Create a connection to the database and insert the items
-conn = sqlite3.connect(os.path.join(".", "data", "news_scraper.db"), timeout=20)
+conn = sqlite3.connect(os.path.join(".", "data", "news.db"), timeout=20)
 conn.execute("PRAGMA journal_mode=WAL;")
 conn.execute(
     "CREATE TABLE IF NOT EXISTS raw_news "
@@ -67,3 +67,5 @@ conn.execute(
 insert(conn, items)
 
 conn.close()
+
+#%%
