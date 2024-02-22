@@ -10,74 +10,46 @@ from news_scraper.spiders.cnn import CNNSpider
 from news_scraper.spiders.foxnews import FoxNewsSpider
 from news_scraper.spiders.nbcnews import NBCNewsSpider
 
-nltk.download("punkt")
-
-data_path = os.path.join(".", "data")
-
-if not os.path.exists(data_path):
-    os.mkdir(data_path)
-
-process = CrawlerProcess(settings=get_project_settings())
-process.crawl(FoxNewsSpider)
-process.crawl(NBCNewsSpider)
-process.crawl(CNNSpider)
-process.start()
-
-items = []
-
-cnn_path = os.path.join(".", "data", "cnn_items.jsonl")
-foxnews_path = os.path.join(".", "data", "foxnews_items.jsonl")
-nbcnews_path = os.path.join(".", "data", "nbcnews_items.jsonl")
-
-paths = [cnn_path, foxnews_path, nbcnews_path]
+from article_manager import ArticleManager
 
 
-def read_from_jsonl(path, items_):
-    with open(path, "r") as f:
-        for line in f:
-            items_.append(json.loads(line.strip()))
+def crawl():
+    nltk.download("punkt")
 
+    data_path = os.path.join(".", "data")
 
-def insert(conn_, items_):
-    query = (
-        "INSERT OR IGNORE INTO raw_news "
-        "(title, author, text, summary, url, source, published_at, scraped_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    )
-    for item in items_:
-        conn.execute(
-            query,
-            (
-                item["title"],
-                item["author"],
-                item["text"],
-                item["summary"],
-                item["url"],
-                item["source"],
-                item["published_at"],
-                item["scraped_at"],
-            ),
-        )
-    conn_.commit()
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
 
+    process = CrawlerProcess(settings=get_project_settings())
+    process.crawl(FoxNewsSpider)
+    process.crawl(NBCNewsSpider)
+    process.crawl(CNNSpider)
+    process.start()
 
-# Read from JSONL files and delete them
-for path in paths:
-    read_from_jsonl(path, items)
-    os.remove(path)
+    def read_from_jsonl(path, items_):
+        with open(path, "r") as f:
+            for line in f:
+                items_.append(json.loads(line.strip()))
 
-# Create a connection to the database and insert the items
-conn = sqlite3.connect(os.path.join(".", "data", "news.db"), timeout=20)
-conn.execute("PRAGMA journal_mode=WAL;")
-conn.execute(
-    "CREATE TABLE IF NOT EXISTS raw_news "
-    "(id INTEGER PRIMARY KEY, title TEXT UNIQUE, "
-    "author TEXT, text TEXT, summary TEXT, url TEXT, "
-    "source TEXT, published_at TEXT, scraped_at TEXT)"
-)
+    items = []
 
-insert(conn, items)
+    cnn_path = os.path.join(".", "data", "cnn_items.jsonl")
+    foxnews_path = os.path.join(".", "data", "foxnews_items.jsonl")
+    nbcnews_path = os.path.join(".", "data", "nbcnews_items.jsonl")
 
-conn.close()
+    paths = [cnn_path, foxnews_path, nbcnews_path]
 
-# %%
+    # Read from JSONL files and delete them
+    for path in paths:
+        read_from_jsonl(path, items)
+        os.remove(path)
+
+    # Create a connection to the database and insert the items
+    conn = sqlite3.connect(os.path.join(".", "data", "news.db"), timeout=20)
+
+    manager = ArticleManager(conn)
+
+    manager.create_table()
+    manager.insert(items)
+    manager.close()
