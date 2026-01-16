@@ -9,6 +9,14 @@ import nltk
 from news_scraper.spiders.cnn import CNNSpider
 from news_scraper.spiders.foxnews import FoxNewsSpider
 from news_scraper.spiders.nbcnews import NBCNewsSpider
+from news_scraper.spiders.reuters import ReutersSpider
+from news_scraper.spiders.bbc import BBCSpider
+from news_scraper.spiders.apnews import APNewsSpider
+from news_scraper.spiders.guardian import GuardianSpider
+from news_scraper.spiders.nytimes import NYTimesSpider
+from news_scraper.spiders.washingtonpost import WashingtonPostSpider
+from news_scraper.spiders.wsj import WSJSpider
+from news_scraper.spiders.aljazeera import AlJazeeraSpider
 
 nltk.download("punkt")
 
@@ -17,19 +25,30 @@ data_path = os.path.join(".", "data")
 if not os.path.exists(data_path):
     os.mkdir(data_path)
 
+spiders = [
+    CNNSpider,
+    FoxNewsSpider,
+    NBCNewsSpider,
+    ReutersSpider,
+    BBCSpider,
+    APNewsSpider,
+    GuardianSpider,
+    NYTimesSpider,
+    WashingtonPostSpider,
+    WSJSpider,
+    AlJazeeraSpider,
+]
+
 process = CrawlerProcess(settings=get_project_settings())
-process.crawl(FoxNewsSpider)
-process.crawl(NBCNewsSpider)
-process.crawl(CNNSpider)
+
+[process.crawl(spider) for spider in spiders]
+
 process.start()
 
 items = []
 
-cnn_path = os.path.join(".", "data", "cnn_items.jsonl")
-foxnews_path = os.path.join(".", "data", "foxnews_items.jsonl")
-nbcnews_path = os.path.join(".", "data", "nbcnews_items.jsonl")
-
-paths = [cnn_path, foxnews_path, nbcnews_path]
+# dynamically build JSONL paths from spider names so new spiders are included
+paths = [os.path.join(".", "data", f"{spider.name}_items.jsonl") for spider in spiders]
 
 
 def read_from_jsonl(path, items_):

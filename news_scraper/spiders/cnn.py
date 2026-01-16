@@ -15,7 +15,7 @@ class CNNSpider(NewsSpider):
         "https://www.cnn.com/business",
     ]
 
-    def is_article_page(self, response):
+    def is_article_page(self, response) -> bool:
         # This method checks if the "class" attribute of the <body> tag contains "article"
         # Using XPath to select the body tag and extract the class attribute
         data_page_type = response.xpath("//body/@data-page-type").extract_first()

@@ -15,7 +15,7 @@ class FoxNewsSpider(NewsSpider):
         "https://www.foxnews.com/us",
     ]
 
-    def is_article_page(self, response):
+    def is_article_page(self, response) -> bool:
         # This method checks if the "class" attribute of the <body> tag contains "fn article-single"
         # Using XPath to select the body tag and extract the class attribute
         body_class = response.xpath("//body/@class").get()

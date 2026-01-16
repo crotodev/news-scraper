@@ -15,7 +15,9 @@ class NBCNewsSpider(NewsSpider):
         "https://www.nbcnews.com/politics",
     ]
 
-    def is_article_page(self, response):
+    def is_article_page(
+        self, response
+    ) -> bool:  # pyright: ignore[reportIncompatibleMethodOverride]
         # This method checks if the "class" attribute of the <body> tag contains "articlePage"
         # Using XPath to select the body tag and extract the class attribute
         body_class = response.xpath("//body/@class").get()

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Generator, Literal
 
 import scrapy
 from random_user_agent.user_agent import UserAgent
@@ -25,7 +26,11 @@ class NewsSpider(scrapy.Spider):
         "CONCURRENT_REQUESTS": 32,
     }
 
-    def parse(self, response):
+    def parse(
+        self, response
+    ) -> Generator[
+        NewsItem | Any, Any, None
+    ]:  # pyright: ignore[reportIncompatibleMethodOverride]
         if self.is_article_page(response):
             item = self.process_article(response, self.domain, self.config)
             yield item
@@ -45,7 +50,7 @@ class NewsSpider(scrapy.Spider):
             return False
 
     @staticmethod
-    def is_article_page(response):
+    def is_article_page(response) -> Literal[True]:
         return True
 
     @staticmethod
