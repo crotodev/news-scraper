@@ -16,3 +16,6 @@ class NewsItem(scrapy.Item):
     source = scrapy.Field()
     published_at = scrapy.Field()
     scraped_at = scrapy.Field()
+    # stable fields for sinks
+    url_hash = scrapy.Field()
+    fingerprint = scrapy.Field()

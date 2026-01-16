@@ -63,15 +63,23 @@ CONCURRENT_REQUESTS = 32
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    # "news_scraper.pipelines.NewsPipeline": 300,
-    "news_scraper.pipelines.MongoDBPipeline": 300,
-    "news_scraper.pipelines.FilePipeline": 400,
+    # Use the generic SinkPipeline which loads a configured Sink implementation
+    "news_scraper.pipelines.SinkPipeline": 300,
 }
 
 # MongoDB defaults (override in environment-specific settings or scrapy settings)
 MONGO_URI = "mongodb://localhost:27017"
 MONGO_DATABASE = "news_db"
 MONGO_COLLECTION = "raw_news"
+
+# Sink configuration: choose which sink class to use and options passed to it.
+# Example: set SINK_CLASS to "news_scraper.sinks.mongo.MongoSink" to write to MongoDB.
+SINK_CLASS = "news_scraper.sinks.jsonl.JsonlSink"
+SINK_SETTINGS = {
+    # for JsonlSink use `path_template`, e.g. "./data/{spider.name}_items.jsonl"
+    "path_template": "./data/{spider.name}_items.jsonl",
+    # for MongoSink you could pass: "uri", "db", "collection"
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

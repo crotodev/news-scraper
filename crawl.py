@@ -1,6 +1,4 @@
-import json
 import os
-import sqlite3
 
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
@@ -20,6 +18,8 @@ from news_scraper.spiders.aljazeera import AlJazeeraSpider
 
 import os
 from typing import List, Type
+import argparse
+import json
 
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
@@ -63,7 +63,10 @@ def build_jsonl_paths(spiders: List[Type], data_dir: str = ".") -> List[str]:
     """Build JSONL output paths for each spider using its `name` attribute."""
     if not os.path.exists(os.path.join(data_dir, "data")):
         os.makedirs(os.path.join(data_dir, "data"), exist_ok=True)
-    return [os.path.join(data_dir, "data", f"{spider.name}_items.jsonl") for spider in spiders]
+    return [
+        os.path.join(data_dir, "data", f"{spider.name}_items.jsonl")
+        for spider in spiders
+    ]
 
 
 def main(run_crawl: bool = True) -> None:
@@ -71,10 +74,50 @@ def main(run_crawl: bool = True) -> None:
 
     Set `run_crawl=False` to avoid starting Scrapy (useful for tests).
     """
+    parser = argparse.ArgumentParser(description="Run news-scraper crawlers")
+    parser.add_argument("--sink-class", dest="sink_class", help="Sink class import path, e.g. news_scraper.sinks.kafka.KafkaSink")
+    parser.add_argument(
+        "--sink-settings",
+        dest="sink_settings",
+        help="Sink settings as JSON string or comma-separated key=val pairs",
+    )
+    parser.add_argument("--no-crawl", dest="no_crawl", action="store_true", help="Don't start the crawl (useful for testing)")
+
+    args = parser.parse_args()
+
     spiders = get_spiders()
 
-    if run_crawl:
-        process = CrawlerProcess(settings=get_project_settings())
+    # Allow configuring sink via CLI args or environment variables.
+    settings = get_project_settings()
+    # CLI overrides env
+    sink_class = args.sink_class or os.environ.get("SINK_CLASS")
+    sink_settings_val = args.sink_settings or os.environ.get("SINK_SETTINGS")
+
+    if sink_class:
+        settings.set("SINK_CLASS", sink_class, priority="cmdline")
+
+    if sink_settings_val:
+        # Accept JSON blob or comma-separated key=val pairs
+        parsed = None
+        txt = sink_settings_val.strip()
+        if txt.startswith("{"):
+            try:
+                parsed = json.loads(txt)
+            except Exception:
+                parsed = None
+        if parsed is None:
+            # parse key=val,key=val
+            parsed = {}
+            for part in txt.split(","):
+                if not part:
+                    continue
+                if "=" in part:
+                    k, v = part.split("=", 1)
+                    parsed[k.strip()] = v.strip()
+        settings.set("SINK_SETTINGS", parsed, priority="cmdline")
+
+    if not args.no_crawl and run_crawl:
+        process = CrawlerProcess(settings=settings)
         for spider in spiders:
             process.crawl(spider)
         process.start()
@@ -82,4 +125,3 @@ def main(run_crawl: bool = True) -> None:
 
 if __name__ == "__main__":
     main()
-    read_from_jsonl(path, items)

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "news-scraper"
+version = "0.1.0"
+description = "News scraper project with pluggable sinks (Scrapy-based)."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [ { name = "Chris Rotondo" } ]
+keywords = ["scrapy", "news", "scraper"]
+license = { text = "MIT" }
+
+dependencies = [
+  "Scrapy>=2.11.0",
+  "newspaper3k",
+  "random-user-agent",
+]
+
+[project.scripts]
+news-scraper = "news_scraper.cli:main"
+
+[project.optional-dependencies]
+# Installable extras for optional sinks. These are not required for the core
+# scraper but are needed if you enable the corresponding sink.
+mongo = [
+  "pymongo>=3.12"
+]
+
+kafka = [
+  "kafka-python>=2.0.2",
+  "confluent-kafka>=1.8.2"
+]
+
+all = [
+  "pymongo>=3.12",
+  "kafka-python>=2.0.2",
+  "confluent-kafka>=1.8.2",
+]
