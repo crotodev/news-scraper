@@ -64,8 +64,14 @@ CONCURRENT_REQUESTS = 32
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     # "news_scraper.pipelines.NewsPipeline": 300,
+    "news_scraper.pipelines.MongoDBPipeline": 300,
     "news_scraper.pipelines.FilePipeline": 400,
 }
+
+# MongoDB defaults (override in environment-specific settings or scrapy settings)
+MONGO_URI = "mongodb://localhost:27017"
+MONGO_DATABASE = "news_db"
+MONGO_COLLECTION = "raw_news"
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
