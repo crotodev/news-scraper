@@ -23,7 +23,7 @@ class NewsSpider(scrapy.Spider):
 
     custom_settings = {
         "USER_AGENT": random_ua,
-        "ROBOTSTXT_OBEY": True,
+        "ROBOTSTXT_OBEY": False,
         "DEPTH_LIMIT": 10,
         "CONCURRENT_REQUESTS": 16,
     }

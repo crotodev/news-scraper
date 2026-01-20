@@ -4,18 +4,6 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 import nltk
 
-from news_scraper.spiders.cnn import CNNSpider
-from news_scraper.spiders.foxnews import FoxNewsSpider
-from news_scraper.spiders.nbcnews import NBCNewsSpider
-from news_scraper.spiders.reuters import ReutersSpider
-from news_scraper.spiders.bbc import BBCSpider
-from news_scraper.spiders.apnews import APNewsSpider
-from news_scraper.spiders.guardian import GuardianSpider
-from news_scraper.spiders.nytimes import NYTimesSpider
-from news_scraper.spiders.washingtonpost import WashingtonPostSpider
-from news_scraper.spiders.wsj import WSJSpider
-from news_scraper.spiders.aljazeera import AlJazeeraSpider
-
 import os
 from typing import List, Type
 import argparse
@@ -25,17 +13,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 import nltk
 
-from news_scraper.spiders.cnn import CNNSpider
-from news_scraper.spiders.foxnews import FoxNewsSpider
-from news_scraper.spiders.nbcnews import NBCNewsSpider
-from news_scraper.spiders.reuters import ReutersSpider
-from news_scraper.spiders.bbc import BBCSpider
-from news_scraper.spiders.apnews import APNewsSpider
-from news_scraper.spiders.guardian import GuardianSpider
-from news_scraper.spiders.nytimes import NYTimesSpider
-from news_scraper.spiders.washingtonpost import WashingtonPostSpider
-from news_scraper.spiders.wsj import WSJSpider
-from news_scraper.spiders.aljazeera import AlJazeeraSpider
+from news_scraper.spiders import *
 
 
 # Ensure punkt tokenizer for article NLP is available when running the crawl
@@ -56,6 +34,7 @@ def get_spiders() -> List[Type]:
         WashingtonPostSpider,
         WSJSpider,
         AlJazeeraSpider,
+        CBSNewsSpider,
     ]
 
 
