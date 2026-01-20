@@ -8,7 +8,7 @@ class MongoSink(Sink):
         uri: str = "mongodb://localhost:27017",
         db: str = "news_db",
         collection: str = "raw_news",
-    ):
+    ) -> None:
         self.uri = uri
         self.db_name = db
         self.collection = collection

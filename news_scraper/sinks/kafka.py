@@ -1,6 +1,7 @@
 import json
 from kafka import KafkaProducer
 
+
 class KafkaSink:
     def __init__(self, bootstrap_servers="localhost:9092", topic="raw_news") -> None:
         self.producer = KafkaProducer(

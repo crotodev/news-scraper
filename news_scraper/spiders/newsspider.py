@@ -73,7 +73,9 @@ class NewsSpider(scrapy.Spider):
 
         url = canonicalize_url(response.url)
         url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()
-        fingerprint = hashlib.sha256((article.text or "").strip().encode("utf-8")).hexdigest()
+        fingerprint = hashlib.sha256(
+            (article.text or "").strip().encode("utf-8")
+        ).hexdigest()
 
         item = NewsItem()
         item["title"] = article.title
@@ -88,5 +90,5 @@ class NewsSpider(scrapy.Spider):
         item["scraped_at"] = datetime.now().isoformat()
         item["url_hash"] = url_hash
         item["fingerprint"] = fingerprint
- 
+
         return item

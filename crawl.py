@@ -75,13 +75,22 @@ def main(run_crawl: bool = True) -> None:
     Set `run_crawl=False` to avoid starting Scrapy (useful for tests).
     """
     parser = argparse.ArgumentParser(description="Run news-scraper crawlers")
-    parser.add_argument("--sink-class", dest="sink_class", help="Sink class import path, e.g. news_scraper.sinks.kafka.KafkaSink")
+    parser.add_argument(
+        "--sink-class",
+        dest="sink_class",
+        help="Sink class import path, e.g. news_scraper.sinks.kafka.KafkaSink",
+    )
     parser.add_argument(
         "--sink-settings",
         dest="sink_settings",
         help="Sink settings as JSON string or comma-separated key=val pairs",
     )
-    parser.add_argument("--no-crawl", dest="no_crawl", action="store_true", help="Don't start the crawl (useful for testing)")
+    parser.add_argument(
+        "--no-crawl",
+        dest="no_crawl",
+        action="store_true",
+        help="Don't start the crawl (useful for testing)",
+    )
 
     args = parser.parse_args()
 
