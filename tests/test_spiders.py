@@ -11,13 +11,9 @@ from news_scraper.spiders.cnn import CNNSpider
 from news_scraper.spiders.bbc import BBCSpider
 from news_scraper.spiders.foxnews import FoxNewsSpider
 from news_scraper.spiders.nytimes import NYTimesSpider
-from news_scraper.spiders.reuters import ReutersSpider
 from news_scraper.spiders.guardian import GuardianSpider
 from news_scraper.spiders.nbcnews import NBCNewsSpider
 from news_scraper.spiders.apnews import APNewsSpider
-from news_scraper.spiders.washingtonpost import WashingtonPostSpider
-from news_scraper.spiders.wsj import WSJSpider
-from news_scraper.spiders.aljazeera import AlJazeeraSpider
 from news_scraper.spiders.cbsnews import CBSNewsSpider
 from news_scraper.spiders.newsspider import NewsSpider
 
@@ -144,22 +140,6 @@ class TestNYTimesSpider:
 
 
 @pytest.fixture
-def reuters_spider() -> ReutersSpider:
-    """Fixture for ReutersSpider."""
-    return ReutersSpider()
-
-
-class TestReutersSpider:
-    """Test cases for ReutersSpider."""
-
-    def test_spider_attributes(self, reuters_spider) -> None:
-        """Test spider has correct attributes."""
-        assert reuters_spider.name == "reuters"
-        assert reuters_spider.domain == "reuters.com"
-        assert "reuters.com" in reuters_spider.allowed_domains
-
-
-@pytest.fixture
 def guardian_spider() -> GuardianSpider:
     """Fixture for GuardianSpider."""
     return GuardianSpider()
@@ -208,54 +188,6 @@ class TestAPNewsSpider:
 
 
 @pytest.fixture
-def washingtonpost_spider():
-    """Fixture for WashingtonPostSpider."""
-    return WashingtonPostSpider()
-
-
-class TestWashingtonPostSpider:
-    """Test cases for WashingtonPostSpider."""
-
-    def test_spider_attributes(self, washingtonpost_spider):
-        """Test spider has correct attributes."""
-        assert washingtonpost_spider.name == "washingtonpost"
-        assert washingtonpost_spider.domain == "washingtonpost.com"
-        assert "washingtonpost.com" in washingtonpost_spider.allowed_domains
-
-
-@pytest.fixture
-def wsj_spider():
-    """Fixture for WSJSpider."""
-    return WSJSpider()
-
-
-class TestWSJSpider:
-    """Test cases for WSJSpider."""
-
-    def test_spider_attributes(self, wsj_spider):
-        """Test spider has correct attributes."""
-        assert wsj_spider.name == "wsj"
-        assert wsj_spider.domain == "wsj.com"
-        assert "wsj.com" in wsj_spider.allowed_domains
-
-
-@pytest.fixture
-def aljazeera_spider() -> AlJazeeraSpider:
-    """Fixture for AlJazeeraSpider."""
-    return AlJazeeraSpider()
-
-
-class TestAlJazeeraSpider:
-    """Test cases for AlJazeeraSpider."""
-
-    def test_spider_attributes(self, aljazeera_spider) -> None:
-        """Test spider has correct attributes."""
-        assert aljazeera_spider.name == "aljazeera"
-        assert aljazeera_spider.domain == "aljazeera.com"
-        assert "aljazeera.com" in aljazeera_spider.allowed_domains
-
-
-@pytest.fixture
 def cbsnews_spider() -> CBSNewsSpider:
     """Fixture for CBSNewsSpider."""
     return CBSNewsSpider()
@@ -279,13 +211,9 @@ def all_spiders() -> List[NewsSpider]:
         BBCSpider(),
         FoxNewsSpider(),
         NYTimesSpider(),
-        ReutersSpider(),
         GuardianSpider(),
         NBCNewsSpider(),
         APNewsSpider(),
-        WashingtonPostSpider(),
-        WSJSpider(),
-        AlJazeeraSpider(),
         CBSNewsSpider(),
     ]
 

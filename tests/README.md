@@ -103,18 +103,21 @@ pytest --lf
 
 ## Test Coverage
 
-The test suite covers:
+The test suite includes **57 passing tests** covering:
 
-- ✅ Base NewsSpider functionality
-  - URL validation
-  - Article processing
+- ✅ Base NewsSpider functionality (test_newsspider.py)
+  - URL validation with `is_article_url()`
+  - Article page detection with `is_article_page()`
+  - Content validation (MIN_ARTICLE_TEXT_LENGTH=250)
+  - Article processing with summary fallback
   - Fingerprint generation
   - Item creation
 
-- ✅ All spider implementations
+- ✅ All 8 spider implementations (test_spiders.py)
   - Initialization and attributes
-  - Article page detection
+  - Article URL pattern matching
   - Consistency across spiders
+  - Spiders: CNN, BBC, CBS News, Fox News, Guardian, NBC News, AP News, NY Times
 
 - ✅ NewsItem structure
   - Field definitions

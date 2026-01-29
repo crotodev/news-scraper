@@ -1,3 +1,5 @@
+import re
+
 from random_user_agent.user_agent import UserAgent
 
 from news_scraper.spiders.newsspider import NewsSpider
@@ -9,15 +11,30 @@ class APNewsSpider(NewsSpider):
     name = "apnews"
     domain = "apnews.com"
     allowed_domains = ["apnews.com", "www.apnews.com"]
+    # Section pages for discovery
     start_urls = [
         "https://apnews.com",
-        "https://apnews.com/hub/politics",
-        "https://apnews.com/hub/technology",
+        "https://apnews.com/politics",
+        "https://apnews.com/world-news",
+        "https://apnews.com/business",
+        "https://apnews.com/technology",
+        "https://apnews.com/us-news",
     ]
 
+    def is_article_url(self, url: str) -> bool:
+        """AP News article URLs have /article/slug format."""
+        # Reject section roots and hubs
+        if re.match(r"https?://[^/]+/(hub/|politics/?$|world-news/?$|business/?$|technology/?$|us-news/?$)", url, re.I):
+            return False
+        # Accept /article/ URLs
+        if "/article/" in url:
+            return True
+        return False
+
     def is_article_page(self, response) -> bool:
-        # Prefer explicit metadata or an <article> tag; also check common URL pattern
         og_type = response.xpath("//meta[@property='og:type']/@content").get()
         if og_type == "article":
             return True
-        return bool(response.xpath("//article")) or "/article/" in response.url
+        if "/article/" in response.url:
+            return True
+        return super().is_article_page(response)

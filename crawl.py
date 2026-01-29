@@ -21,14 +21,10 @@ def get_spiders() -> List[Type]:
         CNNSpider,
         FoxNewsSpider,
         NBCNewsSpider,
-        ReutersSpider,
         BBCSpider,
         APNewsSpider,
         GuardianSpider,
         NYTimesSpider,
-        WashingtonPostSpider,
-        WSJSpider,
-        AlJazeeraSpider,
         CBSNewsSpider,
     ]
 
@@ -49,6 +45,22 @@ def main(run_crawl: bool = True) -> None:
     Set `run_crawl=False` to avoid starting Scrapy (useful for tests).
     """
     parser = argparse.ArgumentParser(description="Run news-scraper crawlers")
+    parser.add_argument(
+        "--spider",
+        dest="spider",
+        help="Run only this spider (by name). If not specified, runs all spiders.",
+    )
+    parser.add_argument(
+        "--sink",
+        dest="sink",
+        choices=["jsonl", "kafka", "mongo"],
+        help="Shorthand for sink class: jsonl, kafka, or mongo",
+    )
+    parser.add_argument(
+        "--jsonl-path",
+        dest="jsonl_path",
+        help="Output path for JSONL sink (requires --sink jsonl)",
+    )
     parser.add_argument(
         "--sink-class",
         dest="sink_class",
@@ -83,10 +95,37 @@ def main(run_crawl: bool = True) -> None:
     logger = logging.getLogger(__name__)
 
     spiders = get_spiders()
+    
+    # Filter to specific spider if requested
+    if args.spider:
+        spider_names = {s.name: s for s in spiders}
+        if args.spider not in spider_names:
+            logger.error(f"Unknown spider: {args.spider}")
+            logger.info(f"Available spiders: {list(spider_names.keys())}")
+            return
+        spiders = [spider_names[args.spider]]
+    
     logger.info(f"Loaded {len(spiders)} spiders: {[s.name for s in spiders]}")
 
     # Allow configuring sink via CLI args or environment variables.
     settings = get_project_settings()
+    
+    # Handle --sink shorthand
+    if args.sink:
+        sink_map = {
+            "jsonl": "news_scraper.sinks.jsonl.JSONLSink",
+            "kafka": "news_scraper.sinks.kafka.KafkaSink",
+            "mongo": "news_scraper.sinks.mongo.MongoSink",
+        }
+        sink_class = sink_map[args.sink]
+        settings.set("SINK_CLASS", sink_class, priority="cmdline")
+        logger.info(f"Using sink: {args.sink} ({sink_class})")
+        
+        # Handle JSONL path
+        if args.sink == "jsonl" and args.jsonl_path:
+            settings.set("SINK_SETTINGS", {"path": args.jsonl_path}, priority="cmdline")
+            logger.info(f"JSONL output path: {args.jsonl_path}")
+    
     logger.info(f"Using sink class: {settings.get('SINK_CLASS')}")
 
     # Set Scrapy's log level

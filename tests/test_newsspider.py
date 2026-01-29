@@ -2,6 +2,7 @@
 Unit tests for the base NewsSpider class.
 """
 
+from typing import Literal
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime
@@ -14,13 +15,13 @@ from news_scraper.items import NewsItem
 
 
 @pytest.fixture
-def news_spider():
+def news_spider() -> NewsSpider:
     """Fixture for NewsSpider."""
     return NewsSpider()
 
 
 @pytest.fixture
-def test_url():
+def test_url() -> Literal['https://example.com/article']:
     """Fixture for test URL."""
     return "https://example.com/article"
 
@@ -50,10 +51,27 @@ class TestNewsSpider:
         assert news_spider.is_valid_url("javascript:void(0)") is False
         assert news_spider.is_valid_url("mailto:test@example.com") is False
 
-    def test_is_article_page_always_true(self, news_spider):
-        """Test that base is_article_page always returns True."""
-        response = Mock()
+    def test_is_article_page_with_article_meta(self, news_spider):
+        """Test is_article_page returns True for article pages."""
+        request = Request(url="https://example.com/news/2026/01/29/test-article")
+        response = HtmlResponse(
+            url="https://example.com/news/2026/01/29/test-article",
+            request=request,
+            body=b'<html><head><meta property="og:type" content="article"/></head><body></body></html>',
+            encoding="utf-8",
+        )
         assert news_spider.is_article_page(response) is True
+
+    def test_is_article_page_rejects_section(self, news_spider):
+        """Test is_article_page returns False for section pages."""
+        request = Request(url="https://example.com/news")
+        response = HtmlResponse(
+            url="https://example.com/news",
+            request=request,
+            body=b"<html><body><div>News list</div></body></html>",
+            encoding="utf-8",
+        )
+        assert news_spider.is_article_page(response) is False
 
     @patch("news_scraper.spiders.newsspider.Article")
     def test_process_article_creates_news_item(
@@ -70,23 +88,25 @@ class TestNewsSpider:
         )
 
         # Setup mock article
+        long_text = "Test article text content " * 20
+        long_summary = ("Test summary content " * 4).strip()
         mock_article = MagicMock()
         mock_article.title = "Test Title"
         mock_article.authors = ["Test Author"]
-        mock_article.text = "Test article text content"
-        mock_article.summary = "Test summary"
+        mock_article.text = long_text
+        mock_article.summary = long_summary
         mock_article.publish_date = datetime(2024, 1, 15, 12, 0, 0)
         mock_article_class.return_value = mock_article
 
         # Process article
-        item = NewsSpider.process_article(response, "example.com", news_spider.config)
+        item = news_spider.process_article(response, "example.com", news_spider.config)
 
         # Assertions
         assert isinstance(item, NewsItem)
         assert item["title"] == "Test Title"
         assert item["author"] == "Test Author"
-        assert item["text"] == "Test article text content"
-        assert item["summary"] == "Test summary"
+        assert item["text"] == long_text
+        assert item["summary"] == long_summary
         assert item["url"] == test_url
         assert item["source"] == "example.com"
         assert item["published_at"] is not None
@@ -117,15 +137,17 @@ class TestNewsSpider:
             encoding="utf-8",
         )
 
+        long_text = "Text " * 70
+        long_summary = "Summary " * 8
         mock_article = MagicMock()
         mock_article.title = "Test"
         mock_article.authors = []
-        mock_article.text = "Text"
-        mock_article.summary = "Summary"
+        mock_article.text = long_text
+        mock_article.summary = long_summary
         mock_article.publish_date = None
         mock_article_class.return_value = mock_article
 
-        item = NewsSpider.process_article(response, "example.com", news_spider.config)
+        item = news_spider.process_article(response, "example.com", news_spider.config)
 
         assert item["author"] == ""
         assert item["published_at"] == ""
@@ -133,7 +155,7 @@ class TestNewsSpider:
         # Verify article still has content even without author
         assert item["text"] is not None and len(item["text"]) > 0
         assert item["title"] is not None and len(item["title"]) > 0
-        assert mock_article.text == "Text"
+        assert mock_article.text == long_text
         assert mock_article.title == "Test"
 
     @patch("news_scraper.spiders.newsspider.Article")
@@ -150,26 +172,30 @@ class TestNewsSpider:
         )
 
         # First article
+        long_text_1 = "Content 1 " * 60
+        long_summary_1 = "Summary 1 " * 8
         mock_article1 = MagicMock()
         mock_article1.title = "Title 1"
         mock_article1.authors = []
-        mock_article1.text = "Content 1"
-        mock_article1.summary = "Summary 1"
+        mock_article1.text = long_text_1
+        mock_article1.summary = long_summary_1
         mock_article1.publish_date = None
         mock_article_class.return_value = mock_article1
 
-        item1 = NewsSpider.process_article(response, "example.com", news_spider.config)
+        item1 = news_spider.process_article(response, "example.com", news_spider.config)
 
         # Second article with different content
+        long_text_2 = "Content 2 " * 60
+        long_summary_2 = "Summary 2 " * 8
         mock_article2 = MagicMock()
         mock_article2.title = "Title 2"
         mock_article2.authors = []
-        mock_article2.text = "Content 2"
-        mock_article2.summary = "Summary 2"
+        mock_article2.text = long_text_2
+        mock_article2.summary = long_summary_2
         mock_article2.publish_date = None
         mock_article_class.return_value = mock_article2
 
-        item2 = NewsSpider.process_article(response, "example.com", news_spider.config)
+        item2 = news_spider.process_article(response, "example.com", news_spider.config)
 
         # Fingerprints should be different
         assert item1["fingerprint"] != item2["fingerprint"]
@@ -200,16 +226,10 @@ class TestNewsSpider:
         mock_article.publish_date = None
         mock_article_class.return_value = mock_article
 
-        item = NewsSpider.process_article(response, "example.com", news_spider.config)
+        item = news_spider.process_article(response, "example.com", news_spider.config)
 
-        # Item should still be created but with empty strings
-        assert isinstance(item, NewsItem)
-        assert item["title"] == ""
-        assert item["text"] == ""
-        assert item["summary"] == ""
-        # Fingerprint should still be generated (hash of empty string)
-        assert item["fingerprint"] is not None
-        assert len(item["fingerprint"]) > 0
+        # Item should be rejected due to missing title/text
+        assert item is None
 
     @patch("news_scraper.spiders.newsspider.Article")
     def test_process_article_verifies_content_exists(
@@ -228,14 +248,12 @@ class TestNewsSpider:
         mock_article = MagicMock()
         mock_article.title = "Real Title"
         mock_article.authors = ["Jane Doe"]
-        mock_article.text = (
-            "Real content here with multiple sentences. This is test content."
-        )
-        mock_article.summary = "Real content here"
+        mock_article.text = "Real content here with multiple sentences. " * 12
+        mock_article.summary = ("Real content here summary " * 5).strip()
         mock_article.publish_date = datetime(2024, 1, 15, 12, 0, 0)
         mock_article_class.return_value = mock_article
 
-        item = NewsSpider.process_article(response, "example.com", news_spider.config)
+        item = news_spider.process_article(response, "example.com", news_spider.config)
 
         # Verify content was actually extracted
         assert item["title"] is not None
@@ -252,6 +270,9 @@ class TestNewsSpider:
 
     def test_parse_follows_valid_links(self, news_spider, test_url):
         """Test that parse follows valid links."""
+        # Set allowed_domains so same-domain check passes
+        news_spider.allowed_domains = ["example.com"]
+        
         request = Request(url=test_url)
         response = HtmlResponse(
             url=test_url,
@@ -259,8 +280,8 @@ class TestNewsSpider:
             body=b"""
             <html>
                 <body>
-                    <a href="https://example.com/article1">Article 1</a>
-                    <a href="https://example.com/article2">Article 2</a>
+                    <a href="https://example.com/news/2026/01/29/long-article-one">Article 1</a>
+                    <a href="https://example.com/article/long-article-two">Article 2</a>
                 </body>
             </html>
             """,
@@ -272,8 +293,9 @@ class TestNewsSpider:
 
         results = list(news_spider.parse(response))
 
-        # Should yield follow requests
-        assert any(hasattr(r, "url") for r in results)
+        # Should yield follow requests for article URLs
+        assert len(results) > 0
+        assert all(hasattr(r, "callback") for r in results)
 
 
 class TestNewsSpiderIntegration:

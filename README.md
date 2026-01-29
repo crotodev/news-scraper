@@ -6,7 +6,7 @@ This project keeps scraping (spiders + parsing + normalization) separate from de
 
 ## Features
 
-- **Multi-source scraping**: Collects news from 11 major news outlets
+- **Multi-source scraping**: Collects news from 8 major news outlets
 - **Structured data extraction**: Extracts `title`, `author`, `text`, `summary`, `url`, `source`, `published_at`, `scraped_at`, plus `url_hash` and `fingerprint` for downstream deduplication
 - **Pluggable sinks**: Choose destination(s) via settings or CLI (JSONL, MongoDB, Kafka, etc.)
 - **Respectful crawling**: Obeys robots.txt and supports concurrency/autothrottle
@@ -17,17 +17,14 @@ This project keeps scraping (spiders + parsing + normalization) separate from de
 
 The scraper supports the following news outlets:
 
-- **Al Jazeera** (`aljazeera`)
 - **AP News** (`apnews`)
 - **BBC** (`bbc`)
+- **CBS News** (`cbsnews`)
 - **CNN** (`cnn`)
 - **Fox News** (`foxnews`)
 - **The Guardian** (`guardian`)
 - **NBC News** (`nbcnews`)
 - **The New York Times** (`nytimes`)
-- **Reuters** (`reuters`)
-- **The Wall Street Journal** (`wsj`)
-- **The Washington Post** (`washingtonpost`)
 
 ## Installation
 
@@ -77,21 +74,33 @@ Run the bundled `crawl.py` which starts the set of spiders defined in `get_spide
 python crawl.py
 ```
 
-CLI sink configuration
+CLI options
 
-`crawl.py` accepts options to configure the sink used by the pipeline:
+`crawl.py` accepts the following options:
 
-- `--sink-class`: full import path to the sink class (e.g. `news_scraper.sinks.kafka.KafkaSink`)
+- `--spider`: Run a specific spider by name (e.g. `cnn`, `bbc`). If omitted, runs all spiders.
+- `--sink`: Sink type to use: `jsonl` (default), `kafka`, or `mongo`
+- `--jsonl-path`: Path for JSONL output (default: `./data/{spider.name}_items.jsonl`)
+- `--sink-class`: Full import path to a custom sink class (e.g. `news_scraper.sinks.kafka.KafkaSink`)
 - `--sink-settings`: JSON string or comma-separated `key=val` pairs passed to the sink constructor
 
 Examples:
 
 ```bash
-# JSON settings
-python crawl.py --sink-class news_scraper.sinks.kafka.KafkaSink --sink-settings '{"bootstrap_servers":"localhost:9092","topic":"raw_news"}'
+# Run a specific spider
+python crawl.py --spider cnn
 
-# simple key=val pairs
-python crawl.py --sink-class news_scraper.sinks.jsonl.JsonlSink --sink-settings path_template=./data/{spider.name}_items.jsonl
+# Use MongoDB sink
+python crawl.py --sink mongo
+
+# Use Kafka sink
+python crawl.py --sink kafka
+
+# Custom JSONL path
+python crawl.py --jsonl-path ./output/news.jsonl
+
+# Advanced: Custom sink class with JSON settings
+python crawl.py --sink-class news_scraper.sinks.kafka.KafkaSink --sink-settings '{"bootstrap_servers":"localhost:9092","topic":"raw_news"}'
 
 # Or use environment variables
 export SINK_CLASS=news_scraper.sinks.mongo.MongoSink
@@ -198,18 +207,15 @@ news-scraper/
     ├── settings.py             # Scrapy settings
     └── spiders/
         ├── __init__.py
-        ├── newsspider.py       # Base spider class
-        ├── aljazeera.py        # Al Jazeera spider
+        ├── newsspider.py       # Base spider class with article detection
         ├── apnews.py           # AP News spider
         ├── bbc.py              # BBC spider
+        ├── cbsnews.py          # CBS News spider
         ├── cnn.py              # CNN spider
         ├── foxnews.py          # Fox News spider
         ├── guardian.py         # Guardian spider
         ├── nbcnews.py          # NBC News spider
-        ├── nytimes.py          # NY Times spider
-        ├── reuters.py          # Reuters spider
-        ├── washingtonpost.py   # Washington Post spider
-        └── wsj.py              # Wall Street Journal spider
+        └── nytimes.py          # NY Times spider
 ```
 
 ## Configuration
@@ -263,12 +269,13 @@ python -m pip install -e .[mongo]
 ### Adding a new spider
 
 1. Create a new spider file in `news_scraper/spiders/`.
-2. Inherit from `NewsSpider` and implement `is_article_page()`.
+2. Inherit from `NewsSpider` and optionally override `is_article_url()` with site-specific URL patterns.
 3. Add the spider to `get_spiders()` in `crawl.py` if you want it included by the default runner.
 
 Example:
 
 ```python
+import re
 from news_scraper.spiders.newsspider import NewsSpider
 
 class NewSourceSpider(NewsSpider):
@@ -277,10 +284,26 @@ class NewSourceSpider(NewsSpider):
     allowed_domains = ["newsource.com"]
     start_urls = ["https://www.newsource.com"]
     
-    def is_article_page(self, response) -> bool:
-        # Implement logic to identify article pages
-        return "article" in response.url
+    def is_article_url(self, url: str) -> bool:
+        # Override with site-specific URL pattern matching
+        # The base class will handle article page validation
+        return bool(re.search(r'/\d{4}/\d{2}/\d{2}/', url)) or '/article/' in url
 ```
+
+### Article Detection & Validation
+
+The base `NewsSpider` class includes robust article detection:
+
+- **URL filtering**: `is_article_url()` checks for date patterns, article slugs, and rejects section/tag/author pages
+- **Content validation**: `is_article_page()` validates HTML structure (og:type, `<article>` tags)
+- **Quality enforcement**: Articles must have:
+  - Valid title
+  - Text content ≥ 250 characters (MIN_ARTICLE_TEXT_LENGTH)
+  - Summary (generated via newspaper3k NLP or first 5 sentences)
+- **Discovery-first crawling**: The `parse()` method prioritizes:
+  1. Extract articles from current page
+  2. Discover and follow article links (up to MAX_FOLLOW_PER_PAGE=100)
+  3. Skip section pages, list pages, and navigation
 
 ## Notes
 
