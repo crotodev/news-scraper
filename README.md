@@ -116,6 +116,83 @@ scrapy crawl cnn -s SINK_CLASS=news_scraper.sinks.kafka.KafkaSink -s SINK_SETTIN
 
 ## Output
 
+### Schema Definition
+
+Every scraped article produces a `NewsItem` with the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | `str \| None` | Article headline (whitespace normalized, stripped) |
+| `author` | `str \| None` | Author name(s), comma-separated if multiple |
+| `text` | `str \| None` | Full article text (whitespace collapsed). Set to `None` if < 200 chars (low-quality) |
+| `summary` | `str \| None` | Article summary, truncated to `summary_max_chars` |
+| `url` | `str` | Original article URL |
+| `source` | `str` | Spider/source identifier (e.g., `"cnn"`, `"bbc"`) |
+| `published_at` | `str \| None` | ISO-8601 UTC timestamp (e.g., `"2026-01-29T12:00:00Z"`), or `None` if not found |
+| `scraped_at` | `str` | ISO-8601 UTC timestamp (always present) |
+| `url_hash` | `str` | SHA-256 of canonicalized URL (tracking params removed) |
+| `fingerprint` | `str` | SHA-256 of content basis for deduplication |
+| `author_source` | `str` | How author was extracted: `"feed"`, `"newspaper3k"`, `"meta"`, or `"missing"` |
+| `summary_max_chars` | `int` | Maximum allowed summary length (default: 512) |
+| `summary_truncated` | `bool` | `True` if summary was truncated to fit `summary_max_chars` |
+| `parse_ok` | `bool` | `True` if parsing succeeded, `False` otherwise |
+| `parse_error` | `str \| None` | Error message if parsing failed |
+| `extraction_method` | `str` | How content was extracted: `"newspaper3k"`, `"rss_only"`, or `"html_fallback"` |
+| `content_length_chars` | `int` | Length of `text` field, or 0 if no text |
+
+### Timestamp Rules
+
+- **`scraped_at`**: Always present, always UTC ISO-8601 (`"2026-01-29T15:30:00Z"`)
+- **`published_at`**: ISO-8601 UTC if found, otherwise `None`
+  - If only a date is available (no time), time defaults to `00:00:00Z`
+  - Dates are never invented—if parsing fails, returns `None`
+
+### Summary Truncation
+
+Summaries are capped at **512 characters** by default (configurable via `SUMMARY_MAX_CHARS`):
+
+1. First attempts newspaper3k's NLP summary
+2. Falls back to first 3-5 sentences of article text
+3. Normalizes whitespace (collapses to single spaces)
+4. Truncates at word boundary with `"..."` suffix if over limit
+5. Sets `summary_truncated = True` if truncation occurred
+
+### Text Normalization
+
+All text fields undergo normalization before output:
+
+- Whitespace collapsed: `re.sub(r"\s+", " ", text).strip()`
+- Titles are stripped of leading/trailing whitespace
+- If `text` exists but is < 200 characters, it's treated as low-quality and set to `None` (summary is preserved)
+
+### Deduplication (url_hash & fingerprint)
+
+Two-level deduplication prevents duplicate articles:
+
+**`url_hash`** — Stable URL identifier:
+- Canonicalizes URL (lowercase scheme/host, no trailing slash)
+- Removes tracking parameters: `utm_*`, `gclid`, `fbclid`, `msclkid`, `ref`, `_ga`, etc.
+- Same article with different referral sources produces identical hash
+
+**`fingerprint`** — Content-based identifier:
+- If text is available: `SHA256(title + first_2k_chars_of_text)`
+- If text is missing: `SHA256(title + published_at + source)`
+- Catches duplicate content published at different URLs
+
+### Parse Debugging
+
+Every output row includes debug fields for monitoring:
+
+- `parse_ok`: `False` means parsing failed but row is still emitted
+- `parse_error`: Human-readable error message (truncated to 200 chars)
+- `extraction_method`: Currently always `"newspaper3k"` (reserved for future extractors)
+- `content_length_chars`: Quick metric for content quality
+
+**Failed parses still emit rows** with available data (`url`, `source`, `scraped_at`, `parse_ok=False`). This ensures:
+- Pipeline never crashes on individual article failures
+- Failure rates can be measured by source
+- Partial data is preserved for debugging
+
 ### JSONL files
 
 By default the project uses `news_scraper.sinks.jsonl.JsonlSink` and writes JSONL files into `./data/`.
@@ -128,14 +205,26 @@ Each line is a JSON object with the canonical `NewsItem` fields:
 {
     "title": "Article Title",
     "author": "Author Name",
-    "text": "Full article text...",
-    "summary": "Article summary...",
+    "text": "Full article text with normalized whitespace...",
+    "summary": "Article summary truncated to 512 chars if needed...",
     "url": "https://example.com/article",
     "source": "cnn",
-    "published_at": "2026-01-16T12:00:00",
-    "scraped_at": "2026-01-16T12:30:00",
-    "url_hash": "...",
-    "fingerprint": "..."
+    "published_at": "2026-01-29T12:00:00Z",
+    "scraped_at": "2026-01-29T12:30:00Z",
+    "url_hash": "a1b2c3d4...",
+    "fingerprint": "e5f6g7h8...",
+    "author_source": "newspaper3k",
+    "summary_max_chars": 512,
+    "summary_truncated": false,
+    "parse_ok": true,
+    "parse_error": null,
+    "extraction_method": "newspaper3k",
+    "content_length_chars": 2847,
+    "sentiment_label": null,
+    "sentiment_score": null,
+    "category_label": null,
+    "category_score": null,
+    "category_model_version": null
 }
 ```
 

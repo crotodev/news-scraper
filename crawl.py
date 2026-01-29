@@ -11,8 +11,20 @@ import nltk
 from news_scraper.spiders import *
 
 
-# Ensure punkt tokenizer for article NLP is available when running the crawl
-nltk.download("punkt")
+def ensure_nltk_data() -> None:
+    """Download NLTK tokenizers only if not already present."""
+    required = ["tokenizers/punkt", "tokenizers/punkt_tab"]
+    for resource in required:
+        try:
+            nltk.data.find(resource)
+        except LookupError:
+            # Resource not found, download it
+            name = resource.split("/")[-1]
+            nltk.download(name, quiet=True)
+
+
+# Ensure NLTK tokenizers for article NLP are available when running the crawl
+ensure_nltk_data()
 
 
 def get_spiders() -> List[Type]:
