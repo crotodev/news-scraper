@@ -78,8 +78,7 @@ def main(run_crawl: bool = True) -> None:
     # Configure logging with the specified level
     log_level = getattr(logging, args.log_level)
     logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     logger = logging.getLogger(__name__)
 
@@ -89,7 +88,7 @@ def main(run_crawl: bool = True) -> None:
     # Allow configuring sink via CLI args or environment variables.
     settings = get_project_settings()
     logger.info(f"Using sink class: {settings.get('SINK_CLASS')}")
-    
+
     # Set Scrapy's log level
     settings.set("LOG_LEVEL", args.log_level, priority="cmdline")
     logger.info(f"Set Scrapy log level to: {args.log_level}")

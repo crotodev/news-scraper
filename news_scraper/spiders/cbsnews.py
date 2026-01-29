@@ -17,5 +17,7 @@ class CBSNewsSpider(NewsSpider):
 
     def is_article_page(self, response) -> bool:
         # CBS News articles have specific article sections
-        article_body = response.xpath("//article[@class='content__body']").extract_first()
+        article_body = response.xpath(
+            "//article[@class='content__body']"
+        ).extract_first()
         return bool(article_body) or bool(response.xpath("//article").extract_first())
