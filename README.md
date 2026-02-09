@@ -17,14 +17,13 @@ This project keeps scraping (spiders + parsing + normalization) separate from de
 
 The scraper supports the following news outlets:
 
-- **AP News** (`apnews`)
-- **BBC** (`bbc`)
-- **CBS News** (`cbsnews`)
-- **CNN** (`cnn`)
-- **Fox News** (`foxnews`)
-- **The Guardian** (`guardian`)
-- **NBC News** (`nbcnews`)
-- **The New York Times** (`nytimes`)
+ - **AP News** (`apnews`)
+ - **BBC** (`bbc`)
+ - **CBS News** (`cbsnews`)
+ - **CNN** (`cnn`)
+ - **Fox News** (`foxnews`)
+ - **The Guardian** (`guardian`)
+ - **NBC News** (`nbcnews`)
 
 ## Installation
 
@@ -304,7 +303,7 @@ news-scraper/
         ├── foxnews.py          # Fox News spider
         ├── guardian.py         # Guardian spider
         ├── nbcnews.py          # NBC News spider
-        └── nytimes.py          # NY Times spider
+
 ```
 
 ## Configuration

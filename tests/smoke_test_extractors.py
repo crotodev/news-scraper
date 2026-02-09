@@ -13,7 +13,6 @@ from news_scraper.extractors import (
     FoxNewsExtractor,
     GuardianExtractor,
     NBCExtractor,
-    NYTimesExtractor,
 )
 
 
@@ -39,7 +38,6 @@ if __name__ == "__main__":
         ("Fox News", FoxNewsExtractor(), "tests/fixtures/foxnews.html"),
         ("Guardian", GuardianExtractor(), "tests/fixtures/guardian.html"),
         ("NBC", NBCExtractor(), "tests/fixtures/nbc.html"),
-        ("NYT", NYTimesExtractor(), "tests/fixtures/nyt.html"),
     ]
 
     print("\n🧪 Extractor Smoke Test\n")

@@ -3,7 +3,6 @@ Unit tests for specific spider implementations (CNN, BBC, etc.).
 """
 
 from typing import List
-from unittest.mock import Mock
 
 import pytest
 from scrapy.http import HtmlResponse, Request
@@ -16,7 +15,6 @@ from news_scraper.spiders.foxnews import FoxNewsSpider
 from news_scraper.spiders.guardian import GuardianSpider
 from news_scraper.spiders.nbcnews import NBCNewsSpider
 from news_scraper.spiders.newsspider import NewsSpider
-from news_scraper.spiders.nytimes import NYTimesSpider
 
 
 @pytest.fixture
@@ -125,22 +123,6 @@ class TestFoxNewsSpider:
 
 
 @pytest.fixture
-def nytimes_spider() -> NYTimesSpider:
-    """Fixture for NYTimesSpider."""
-    return NYTimesSpider()
-
-
-class TestNYTimesSpider:
-    """Test cases for NYTimesSpider."""
-
-    def test_spider_attributes(self, nytimes_spider) -> None:
-        """Test spider has correct attributes."""
-        assert nytimes_spider.name == "nytimes"
-        assert nytimes_spider.domain == "nytimes.com"
-        assert "nytimes.com" in nytimes_spider.allowed_domains
-
-
-@pytest.fixture
 def guardian_spider() -> GuardianSpider:
     """Fixture for GuardianSpider."""
     return GuardianSpider()
@@ -211,7 +193,6 @@ def all_spiders() -> List[NewsSpider]:
         CNNSpider(),
         BBCSpider(),
         FoxNewsSpider(),
-        NYTimesSpider(),
         GuardianSpider(),
         NBCNewsSpider(),
         APNewsSpider(),

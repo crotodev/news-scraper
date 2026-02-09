@@ -11,4 +11,3 @@ from .foxnews import *
 from .guardian import *
 from .nbcnews import *
 from .newsspider import *
-from .nytimes import *

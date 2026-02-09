@@ -11,7 +11,7 @@ ua = UserAgent()
 class CNNSpider(NewsSpider):
     name = "cnn"
     domain = "cnn.com"
-    allowed_domains = ["cnn.com"]
+    allowed_domains = ["cnn.com", "www.cnn.com"]
     extractor = CNNExtractor()
 
     # Section pages for discovery, not article processing

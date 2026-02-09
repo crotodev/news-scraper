@@ -36,7 +36,6 @@ def get_spiders() -> List[Type]:
         BBCSpider,
         APNewsSpider,
         GuardianSpider,
-        NYTimesSpider,
         CBSNewsSpider,
     ]
 

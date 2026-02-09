@@ -20,7 +20,6 @@ def check_fixtures():
         "foxnews.html",
         "guardian.html",
         "nbc.html",
-        "nyt.html",
     ]
 
     print("Checking for HTML fixtures...")

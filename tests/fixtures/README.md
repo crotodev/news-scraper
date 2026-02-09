@@ -13,7 +13,7 @@ Place the following HTML snapshot files in this directory:
 - `foxnews.html` - Fox News article
 - `guardian.html` - The Guardian article
 - `nbc.html` - NBC News article
-- `nyt.html` - New York Times article
+
 
 ## Capturing HTML Snapshots
 

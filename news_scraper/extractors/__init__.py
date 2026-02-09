@@ -12,7 +12,6 @@ from news_scraper.extractors.cnn import CNNExtractor
 from news_scraper.extractors.foxnews import FoxNewsExtractor
 from news_scraper.extractors.guardian import GuardianExtractor
 from news_scraper.extractors.nbc import NBCExtractor
-from news_scraper.extractors.nyt import NYTimesExtractor
 
 __all__ = [
     "APNewsExtractor",
@@ -22,5 +21,4 @@ __all__ = [
     "FoxNewsExtractor",
     "GuardianExtractor",
     "NBCExtractor",
-    "NYTimesExtractor",
 ]

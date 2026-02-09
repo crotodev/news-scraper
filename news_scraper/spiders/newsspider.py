@@ -706,7 +706,7 @@ class NewsSpider(scrapy.Spider):
             if og_author and og_author.strip():
                 return og_author.strip(), "meta"
 
-            # Try meta[name="byl"] (NYT style)
+            # Try meta[name="byl"] (byline meta tag)
             byl_author = response.xpath("//meta[@name='byl']/@content").get()
             if byl_author and byl_author.strip():
                 # Often formatted as "By Author Name"
