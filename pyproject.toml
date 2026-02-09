@@ -21,6 +21,11 @@ dependencies = [
 [project.scripts]
 news-scraper = "news_scraper.cli:main"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["news_scraper*"]
+exclude = ["tests*", "test_data*", "custom*"]
+
 [project.optional-dependencies]
 # Installable extras for optional sinks. These are not required for the core
 # scraper but are needed if you enable the corresponding sink.

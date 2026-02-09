@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.bbc import BBCExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -11,6 +12,8 @@ class BBCSpider(NewsSpider):
     name = "bbc"
     domain = "bbc.com"
     allowed_domains = ["bbc.com", "www.bbc.com"]
+    extractor = BBCExtractor()
+
     # Section pages for discovery
     start_urls = [
         "https://www.bbc.com/news",

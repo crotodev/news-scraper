@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.foxnews import FoxNewsExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -10,7 +11,9 @@ ua = UserAgent()
 class FoxNewsSpider(NewsSpider):
     name = "foxnews"
     domain = "foxnews.com"
-    allowed_domains = ["foxnews.com"]
+    allowed_domains = ["foxnews.com", "www.foxnews.com"]
+    extractor = FoxNewsExtractor()
+
     # Section pages for discovery
     start_urls = [
         "https://www.foxnews.com",

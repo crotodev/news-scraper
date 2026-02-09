@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.cnn import CNNExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -11,6 +12,8 @@ class CNNSpider(NewsSpider):
     name = "cnn"
     domain = "cnn.com"
     allowed_domains = ["cnn.com"]
+    extractor = CNNExtractor()
+
     # Section pages for discovery, not article processing
     start_urls = [
         "https://www.cnn.com",

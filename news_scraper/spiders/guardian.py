@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.guardian import GuardianExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -11,6 +12,8 @@ class GuardianSpider(NewsSpider):
     name = "guardian"
     domain = "theguardian.com"
     allowed_domains = ["theguardian.com", "www.theguardian.com"]
+    extractor = GuardianExtractor()
+
     # Section pages for discovery
     start_urls = [
         "https://www.theguardian.com/international",

@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Generator, Optional
@@ -227,6 +228,9 @@ class NewsSpider(scrapy.Spider):
     # Feed/sitemap patterns to reject
     FEED_PATTERNS = ["rss", "feed", "sitemap", "atom"]
 
+    # Optional extractor instance (set by subclasses)
+    extractor = None
+
     def parse(
         self, response
     ) -> Generator[
@@ -239,7 +243,11 @@ class NewsSpider(scrapy.Spider):
         """
         # Check if this is a real article page
         if self.is_article_page(response):
-            item = self.process_article(response, self.domain, self.config)
+            # Use extractor if available, otherwise fall back to newspaper3k
+            if self.extractor:
+                item = self.process_article_with_extractor(response, self.domain)
+            else:
+                item = self.process_article(response, self.domain, self.config)
             if item is not None:  # Only yield valid articles
                 yield item
             return  # Don't follow links from articles
@@ -512,6 +520,153 @@ class NewsSpider(scrapy.Spider):
         item["parse_ok"] = True
 
         return item
+
+    def process_article_with_extractor(
+        self, response, source: str
+    ) -> Optional[NewsItem]:
+        """
+        Process an article page using the extractor framework.
+
+        Always emits a row (for debugging/metrics), but sets parse_ok=False
+        if extraction fails. This ensures the pipeline never crashes on individual
+        article failures and allows measuring failure rate by source.
+        """
+        # Initialize item with guaranteed fields
+        item = NewsItem()
+        item["url"] = response.url
+        item["source"] = source
+        item["scraped_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Initialize parse-debug fields
+        item["parse_ok"] = False
+        item["parse_error"] = None
+        item["extraction_method"] = "extractor"
+        item["content_length_chars"] = 0
+
+        try:
+            # Extract article using platform-specific extractor
+            extracted = self.extractor.extract(response)
+
+            self.logger.debug(
+                f"Extracted article from {response.url}: "
+                f"method={extracted.extraction_method}, "
+                f"confidence={extracted.confidence:.2f}, "
+                f"body_length={len(extracted.body) if extracted.body else 0}, "
+                f"errors={extracted.errors}"
+            )
+
+            # Map ExtractedArticle to NewsItem fields
+            item["title"] = normalize_whitespace(extracted.title)
+            item["text"] = normalize_whitespace(extracted.body)
+            item["author"] = extracted.author
+            item["extraction_method"] = extracted.extraction_method
+
+            # Convert datetime to ISO-8601 string
+            if extracted.published_at:
+                item["published_at"] = parse_iso8601_date(extracted.published_at)
+            else:
+                item["published_at"] = None
+
+            # Calculate content length
+            if item["text"]:
+                item["content_length_chars"] = len(item["text"])
+            else:
+                item["content_length_chars"] = 0
+
+            # Generate summary from body if available
+            if extracted.body:
+                summary, summary_truncated = self._generate_summary_from_text(
+                    extracted.body
+                )
+                item["summary"] = summary
+                item["summary_truncated"] = summary_truncated
+            else:
+                item["summary"] = None
+                item["summary_truncated"] = False
+
+            item["summary_max_chars"] = self.SUMMARY_MAX_CHARS
+
+            # Set author_source based on whether author was found
+            if extracted.author:
+                item["author_source"] = extracted.extraction_method
+            else:
+                item["author_source"] = "missing"
+
+            # Generate deduplication hashes
+            item["url_hash"] = self._compute_url_hash(response.url)
+            item["fingerprint"] = self._compute_fingerprint(
+                item["title"], item["published_at"], source, item["text"]
+            )
+
+            # Check extraction quality
+            if not item["title"]:
+                item["parse_error"] = "No title extracted"
+            elif not item["text"] or len(item["text"]) < self.MIN_ARTICLE_TEXT_LENGTH:
+                item["parse_error"] = (
+                    f"Text too short or missing: "
+                    f"{item['content_length_chars']} < {self.MIN_ARTICLE_TEXT_LENGTH}"
+                )
+            elif extracted.confidence < 0.50:
+                item["parse_error"] = (
+                    f"Low extraction confidence: {extracted.confidence:.2f}"
+                )
+            elif extracted.errors:
+                # Non-fatal errors
+                item["parse_error"] = "; ".join(extracted.errors[:3])
+                item["parse_ok"] = True  # Still mark as OK if we got content
+            else:
+                item["parse_ok"] = True
+
+            return item
+
+        except Exception as e:
+            # Extraction failed completely
+            self.logger.error(f"Extractor failed for {response.url}: {e}")
+            item["parse_error"] = f"Extractor failed: {str(e)[:200]}"
+            item["title"] = None
+            item["author"] = None
+            item["author_source"] = "missing"
+            item["text"] = None
+            item["summary"] = None
+            item["summary_max_chars"] = self.SUMMARY_MAX_CHARS
+            item["summary_truncated"] = False
+            item["published_at"] = None
+            item["url_hash"] = self._compute_url_hash(response.url)
+            item["fingerprint"] = self._compute_fingerprint(None, None, source, None)
+            return item
+
+    def _generate_summary_from_text(self, text: str) -> tuple[Optional[str], bool]:
+        """
+        Generate summary from text by extracting first few sentences.
+
+        Returns: (summary_text, was_truncated)
+        """
+        if not text:
+            return None, False
+
+        max_chars = self.SUMMARY_MAX_CHARS
+
+        # Extract first 3-5 sentences
+        sentences = re.split(r"(?<=[.!?])\s+", text)
+        summary_text = " ".join(sentences[:5])
+
+        # Normalize whitespace
+        normalized = normalize_whitespace(summary_text)
+        if not normalized:
+            return None, False
+
+        original_len = len(normalized)
+
+        # Truncate if needed
+        if original_len > max_chars:
+            # Truncate at word boundary
+            truncated = normalized[:max_chars].rsplit(" ", 1)[0]
+            # Add ellipsis only if we actually cut content
+            if len(truncated) < original_len:
+                truncated = truncated.rstrip(".,!?;:") + "..."
+            return truncated, True
+
+        return normalized, False
 
     def _extract_author(self, article: Article, response) -> tuple[Optional[str], str]:
         """

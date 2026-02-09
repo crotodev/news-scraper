@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.nyt import NYTimesExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -11,6 +12,8 @@ class NYTimesSpider(NewsSpider):
     name = "nytimes"
     domain = "nytimes.com"
     allowed_domains = ["nytimes.com", "www.nytimes.com"]
+    extractor = NYTimesExtractor()
+
     # Section pages for discovery
     start_urls = [
         "https://www.nytimes.com",

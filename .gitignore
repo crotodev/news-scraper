@@ -166,3 +166,4 @@ data/
 .idea/
 
 *.jsonl
+*.html

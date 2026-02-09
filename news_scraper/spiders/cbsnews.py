@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.cbs import CBSExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -11,6 +12,8 @@ class CBSNewsSpider(NewsSpider):
     name = "cbsnews"
     domain = "cbsnews.com"
     allowed_domains = ["cbsnews.com", "www.cbsnews.com"]
+    extractor = CBSExtractor()
+
     # Section pages for discovery
     start_urls = [
         "https://www.cbsnews.com",

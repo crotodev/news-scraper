@@ -2,6 +2,7 @@ import re
 
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.nbc import NBCExtractor
 from news_scraper.spiders.newsspider import NewsSpider
 
 ua = UserAgent()
@@ -11,6 +12,8 @@ class NBCNewsSpider(NewsSpider):
     name = "nbcnews"
     domain = "nbcnews.com"
     allowed_domains = ["nbcnews.com", "www.nbcnews.com"]
+    extractor = NBCExtractor()
+
     # Section pages for discovery
     start_urls = [
         "https://www.nbcnews.com",
