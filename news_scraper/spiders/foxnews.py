@@ -1,4 +1,5 @@
 import re
+
 from random_user_agent.user_agent import UserAgent
 
 from news_scraper.spiders.newsspider import NewsSpider
@@ -28,7 +29,11 @@ class FoxNewsSpider(NewsSpider):
         if re.search(r"/(video|category|shows|person)/", url, re.I):
             return False
         # Accept articles with slug (section/long-slug-name)
-        if re.search(r"/(politics|us|world|media|opinion|entertainment|tech)/[a-z0-9-]{20,}", url, re.I):
+        if re.search(
+            r"/(politics|us|world|media|opinion|entertainment|tech)/[a-z0-9-]{20,}",
+            url,
+            re.I,
+        ):
             return True
         return False
 

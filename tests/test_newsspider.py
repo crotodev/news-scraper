@@ -2,16 +2,17 @@
 Unit tests for the base NewsSpider class.
 """
 
-from typing import Literal
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from datetime import datetime
 import hashlib
+from datetime import datetime
+from typing import Literal
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+from scrapy.http import HtmlResponse, Request
 from w3lib.url import canonicalize_url
 
-from scrapy.http import HtmlResponse, Request
-from news_scraper.spiders.newsspider import NewsSpider
 from news_scraper.items import NewsItem
+from news_scraper.spiders.newsspider import NewsSpider
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def news_spider() -> NewsSpider:
 
 
 @pytest.fixture
-def test_url() -> Literal['https://example.com/article']:
+def test_url() -> Literal["https://example.com/article"]:
     """Fixture for test URL."""
     return "https://example.com/article"
 
@@ -272,7 +273,7 @@ class TestNewsSpider:
         """Test that parse follows valid links."""
         # Set allowed_domains so same-domain check passes
         news_spider.allowed_domains = ["example.com"]
-        
+
         request = Request(url=test_url)
         response = HtmlResponse(
             url=test_url,

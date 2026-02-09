@@ -1,4 +1,5 @@
 from itemadapter import ItemAdapter
+
 from .base import Sink
 
 

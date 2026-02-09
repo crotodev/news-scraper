@@ -24,7 +24,11 @@ class APNewsSpider(NewsSpider):
     def is_article_url(self, url: str) -> bool:
         """AP News article URLs have /article/slug format."""
         # Reject section roots and hubs
-        if re.match(r"https?://[^/]+/(hub/|politics/?$|world-news/?$|business/?$|technology/?$|us-news/?$)", url, re.I):
+        if re.match(
+            r"https?://[^/]+/(hub/|politics/?$|world-news/?$|business/?$|technology/?$|us-news/?$)",
+            url,
+            re.I,
+        ):
             return False
         # Accept /article/ URLs
         if "/article/" in url:

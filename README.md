@@ -372,7 +372,7 @@ class NewSourceSpider(NewsSpider):
     domain = "newsource.com"
     allowed_domains = ["newsource.com"]
     start_urls = ["https://www.newsource.com"]
-    
+
     def is_article_url(self, url: str) -> bool:
         # Override with site-specific URL pattern matching
         # The base class will handle article page validation

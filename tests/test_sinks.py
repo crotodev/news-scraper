@@ -2,16 +2,17 @@
 Unit tests for sink implementations.
 """
 
-import pytest
-import os
 import json
-import tempfile
+import os
 import shutil
-from unittest.mock import Mock, MagicMock, patch
+import tempfile
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from news_scraper.items import NewsItem
-from news_scraper.sinks.jsonl import JsonlSink
 from news_scraper.sinks.base import Sink
+from news_scraper.sinks.jsonl import JsonlSink
 
 
 @pytest.fixture

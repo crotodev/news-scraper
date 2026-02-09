@@ -1,6 +1,8 @@
-import os
 import json
+import os
+
 from itemadapter import ItemAdapter
+
 from .base import Sink
 
 

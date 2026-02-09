@@ -3,6 +3,7 @@ Unit tests for news scraper items.
 """
 
 import pytest
+
 from news_scraper.items import NewsItem
 
 

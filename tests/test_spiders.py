@@ -2,20 +2,21 @@
 Unit tests for specific spider implementations (CNN, BBC, etc.).
 """
 
-import pytest
-from unittest.mock import Mock
 from typing import List
+from unittest.mock import Mock
 
+import pytest
 from scrapy.http import HtmlResponse, Request
-from news_scraper.spiders.cnn import CNNSpider
+
+from news_scraper.spiders.apnews import APNewsSpider
 from news_scraper.spiders.bbc import BBCSpider
+from news_scraper.spiders.cbsnews import CBSNewsSpider
+from news_scraper.spiders.cnn import CNNSpider
 from news_scraper.spiders.foxnews import FoxNewsSpider
-from news_scraper.spiders.nytimes import NYTimesSpider
 from news_scraper.spiders.guardian import GuardianSpider
 from news_scraper.spiders.nbcnews import NBCNewsSpider
-from news_scraper.spiders.apnews import APNewsSpider
-from news_scraper.spiders.cbsnews import CBSNewsSpider
 from news_scraper.spiders.newsspider import NewsSpider
+from news_scraper.spiders.nytimes import NYTimesSpider
 
 
 @pytest.fixture

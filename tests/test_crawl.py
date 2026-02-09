@@ -2,15 +2,16 @@
 Integration tests for the crawl script.
 """
 
-import pytest
-import sys
 import os
-from unittest.mock import Mock, patch, MagicMock
+import sys
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from crawl import get_spiders, build_jsonl_paths, main
+from crawl import build_jsonl_paths, get_spiders, main
 
 
 class TestGetSpiders:

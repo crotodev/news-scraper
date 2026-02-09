@@ -1,4 +1,5 @@
 import re
+
 from random_user_agent.user_agent import UserAgent
 
 from news_scraper.spiders.newsspider import NewsSpider

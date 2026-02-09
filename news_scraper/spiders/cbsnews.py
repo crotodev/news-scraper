@@ -23,7 +23,11 @@ class CBSNewsSpider(NewsSpider):
     def is_article_url(self, url: str) -> bool:
         """CBS News article URLs have /news/ pattern with slug."""
         # Reject section roots
-        if re.match(r"https?://[^/]+/(us|world|politics|moneywatch|entertainment|business)/?$", url, re.I):
+        if re.match(
+            r"https?://[^/]+/(us|world|politics|moneywatch|entertainment|business)/?$",
+            url,
+            re.I,
+        ):
             return False
         # Reject video/live pages
         if re.search(r"/(video|live|essentials)/", url, re.I):

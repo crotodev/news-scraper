@@ -1,4 +1,5 @@
 import re
+
 from random_user_agent.user_agent import UserAgent
 
 from news_scraper.spiders.newsspider import NewsSpider
@@ -23,7 +24,9 @@ class GuardianSpider(NewsSpider):
     def is_article_url(self, url: str) -> bool:
         """Guardian article URLs have date pattern like /2026/jan/27/slug."""
         # Reject section roots
-        if re.match(r"https?://[^/]+/(world|uk|us|technology|business|politics)/?$", url, re.I):
+        if re.match(
+            r"https?://[^/]+/(world|uk|us|technology|business|politics)/?$", url, re.I
+        ):
             return False
         # Reject video/gallery/live
         if re.search(r"/(video|gallery|live)/", url, re.I):

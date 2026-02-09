@@ -23,7 +23,11 @@ class NBCNewsSpider(NewsSpider):
     def is_article_url(self, url: str) -> bool:
         """NBC News article URLs contain ID pattern like rcna12345."""
         # Reject section roots
-        if re.match(r"https?://[^/]+/(politics|world|business|tech-media|health|us-news)/?$", url, re.I):
+        if re.match(
+            r"https?://[^/]+/(politics|world|business|tech-media|health|us-news)/?$",
+            url,
+            re.I,
+        ):
             return False
         # Reject video/shows
         if re.search(r"/(video|shows|now)/", url, re.I):
