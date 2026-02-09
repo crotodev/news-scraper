@@ -52,6 +52,13 @@ class TestNewsItem:
             "scraped_at",
             "url_hash",
             "fingerprint",
+            "author_source",
+            "summary_max_chars",
+            "summary_truncated",
+            "parse_ok",
+            "parse_error",
+            "extraction_method",
+            "content_length_chars",
         }
 
         # Get actual field names from the item

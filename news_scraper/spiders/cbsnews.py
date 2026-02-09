@@ -32,11 +32,14 @@ class CBSNewsSpider(NewsSpider):
             re.I,
         ):
             return False
+        # Reject /news/ root
+        if re.match(r"https?://[^/]+/news/?$", url, re.I):
+            return False
         # Reject video/live pages
         if re.search(r"/(video|live|essentials)/", url, re.I):
             return False
-        # Accept /news/ URLs with slugs
-        if re.search(r"/news/[a-z0-9-]{20,}", url, re.I):
+        # Accept /news/ URLs with any slug (single segment after /news/)
+        if re.search(r"/news/[^/]+/?$", url, re.I):
             return True
         return False
 

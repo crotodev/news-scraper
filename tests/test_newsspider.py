@@ -89,7 +89,7 @@ class TestNewsSpider:
         )
 
         # Setup mock article
-        long_text = "Test article text content " * 20
+        long_text = ("Test article text content " * 20).strip()
         long_summary = ("Test summary content " * 4).strip()
         mock_article = MagicMock()
         mock_article.title = "Test Title"
@@ -150,8 +150,8 @@ class TestNewsSpider:
 
         item = news_spider.process_article(response, "example.com", news_spider.config)
 
-        assert item["author"] == ""
-        assert item["published_at"] == ""
+        assert item["author"] is None
+        assert item["published_at"] is None
 
         # Verify article still has content even without author
         assert item["text"] is not None and len(item["text"]) > 0
@@ -229,8 +229,11 @@ class TestNewsSpider:
 
         item = news_spider.process_article(response, "example.com", news_spider.config)
 
-        # Item should be rejected due to missing title/text
-        assert item is None
+        # Item should be emitted with parse_ok=False (always-emit pattern for metrics)
+        assert item is not None
+        assert item["parse_ok"] is False
+        assert item["parse_error"] is not None
+        assert item["text"] is None
 
     @patch("news_scraper.spiders.newsspider.Article")
     def test_process_article_verifies_content_exists(
@@ -249,7 +252,7 @@ class TestNewsSpider:
         mock_article = MagicMock()
         mock_article.title = "Real Title"
         mock_article.authors = ["Jane Doe"]
-        mock_article.text = "Real content here with multiple sentences. " * 12
+        mock_article.text = ("Real content here with multiple sentences. " * 12).strip()
         mock_article.summary = ("Real content here summary " * 5).strip()
         mock_article.publish_date = datetime(2024, 1, 15, 12, 0, 0)
         mock_article_class.return_value = mock_article

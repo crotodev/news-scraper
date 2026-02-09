@@ -9,6 +9,7 @@ import scrapy
 from newspaper import Article, Config
 from random_user_agent.user_agent import UserAgent
 
+from news_scraper.extractors.base import extract_json_ld
 from news_scraper.items import NewsItem
 
 ua = UserAgent()
@@ -372,7 +373,18 @@ class NewsSpider(scrapy.Spider):
         if not self.is_article_url(url):
             return False
 
-        # C) Check for common article page indicators
+        # C) Check for JSON-LD Article/NewsArticle (cheap, reliable)
+        try:
+            json_ld_data = extract_json_ld(response)
+            for item in json_ld_data:
+                item_type = item.get("@type")
+                if item_type in ["Article", "NewsArticle"]:
+                    return True
+        except Exception:
+            # JSON-LD parsing failed, continue with other checks
+            pass
+
+        # D) Check for common article page indicators
         # Look for og:type="article"
         og_type = response.xpath("//meta[@property='og:type']/@content").get()
         if og_type == "article":

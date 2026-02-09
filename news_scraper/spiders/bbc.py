@@ -34,6 +34,9 @@ class BBCSpider(NewsSpider):
         # Accept article paths with slugs
         if re.search(r"/articles/[a-z0-9]+", url, re.I):
             return True
+        # Accept BBC Sport article URLs (e.g., /sport/articles/c4g5lj59rr9o)
+        if re.search(r"/sport/articles/[a-z0-9]+", url, re.I):
+            return True
         return False
 
     def is_article_page(self, response) -> bool:
