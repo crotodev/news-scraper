@@ -65,52 +65,83 @@ python -m pip install -e .[all]
 
 ## Usage
 
-### Run All Spiders (default)
+### CLI (Typer)
 
-Run the bundled `crawl.py` which starts the set of spiders defined in `get_spiders()`:
+The project ships a Typer-based CLI as the primary entrypoint. Run it via:
 
 ```bash
-python crawl.py
+# As a module
+python -m news_scraper.cli crawl <spider>
+
+# Or via the console script (after pip install -e .)
+news-scraper crawl <spider>
 ```
 
-CLI options
+#### `crawl` command
 
-`crawl.py` accepts the following options:
+```
+crawl SPIDER [OPTIONS]
+```
 
-- `--spider`: Run a specific spider by name (e.g. `cnn`, `bbc`). If omitted, runs all spiders.
-- `--sink`: Sink type to use: `jsonl` (default), `kafka`, or `mongo`
-- `--jsonl-path`: Path for JSONL output (default: `./data/{spider.name}_items.jsonl`)
-- `--sink-class`: Full import path to a custom sink class (e.g. `news_scraper.sinks.kafka.KafkaSink`)
-- `--sink-settings`: JSON string or comma-separated `key=val` pairs passed to the sink constructor
+| Option | Description |
+|--------|-------------|
+| `SPIDER` (required) | Spider name to run (e.g. `apnews`, `bbc`, `cnn`) |
+| `--start-urls` | Comma-separated list of start URLs (overrides spider defaults) |
+| `--loglevel` | Scrapy log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO) |
+| `--output`, `-o` | Output file (format inferred from suffix: `.jsonl`, `.csv`, `.json`) |
+| `--sink` | Shorthand sink type: `jsonl`, `kafka`, or `mongo` |
+| `--jsonl-path` | Output path for JSONL sink |
+| `--sink-class` | Full import path to a custom sink class |
+| `--sink-settings` | Sink settings as JSON string or comma-separated `key=val` pairs |
+| `--no-crawl` | Skip crawl execution (useful for testing) |
 
-Examples:
+#### Examples
 
 ```bash
-# Run a specific spider
-python crawl.py --spider cnn
+# Run the AP News spider
+python -m news_scraper.cli crawl apnews
+
+# Run BBC spider with debug logging
+python -m news_scraper.cli crawl bbc --loglevel DEBUG
+
+# Override start URLs
+python -m news_scraper.cli crawl bbc --start-urls "https://www.bbc.com/news"
+
+# Write output to a specific file
+python -m news_scraper.cli crawl cnn --output ./data/cnn.jsonl
 
 # Use MongoDB sink
-python crawl.py --sink mongo
+python -m news_scraper.cli crawl cnn --sink mongo
 
-# Use Kafka sink
-python crawl.py --sink kafka
-
-# Custom JSONL path
-python crawl.py --jsonl-path ./output/news.jsonl
-
-# Advanced: Custom sink class with JSON settings
-python crawl.py --sink-class news_scraper.sinks.kafka.KafkaSink --sink-settings '{"bootstrap_servers":"localhost:9092","topic":"raw_news"}'
+# Advanced: custom sink class with JSON settings
+python -m news_scraper.cli crawl cnn \
+  --sink-class news_scraper.sinks.kafka.KafkaSink \
+  --sink-settings '{"bootstrap_servers":"localhost:9092","topic":"raw_news"}'
 
 # Or use environment variables
 export SINK_CLASS=news_scraper.sinks.mongo.MongoSink
 export SINK_SETTINGS='{"uri":"mongodb://localhost:27017","db":"news_db","collection":"raw_news"}'
-python crawl.py
+python -m news_scraper.cli crawl cnn
 ```
 
 You can also use Scrapy's normal CLI against individual spiders (they are unchanged):
 
 ```bash
 scrapy crawl cnn -s SINK_CLASS=news_scraper.sinks.kafka.KafkaSink -s SINK_SETTINGS='{"bootstrap_servers":"localhost:9092","topic":"raw_news"}'
+```
+
+> **Why Typer?** The CLI uses [Typer](https://typer.tiangolo.com/) instead of ad-hoc argparse scripts because it provides explicit, self-documenting commands with built-in `--help`, is easy to extend with new sub-commands (extractors, fixtures, etc.), and is safer than growing a monolithic script.
+
+#### Legacy `crawl.py`
+
+The old `crawl.py` still works but prints a deprecation warning. Migrate to the Typer CLI when convenient:
+
+```bash
+# Old (deprecated)
+python crawl.py --spider cnn
+
+# New
+python -m news_scraper.cli crawl cnn
 ```
 
 ## Output
@@ -283,12 +314,14 @@ kcat -C -b localhost:9092 -t raw_news -o beginning -c 10 | jq .
 
 ```
 news-scraper/
-├── crawl.py                    # Main script to run all spiders
+├── crawl.py                    # Legacy entrypoint (deprecated, delegates to CLI)
 ├── requirements.txt            # Python dependencies
 ├── scrapy.cfg                  # Scrapy configuration
 ├── README.md                   # This file
 └── news_scraper/
     ├── __init__.py
+    ├── __main__.py             # python -m news_scraper entrypoint
+    ├── cli.py                  # Typer CLI (primary entrypoint)
     ├── items.py                # Item definitions (NewsItem)
     ├── middlewares.py          # Custom middlewares
     ├── pipelines.py            # Data pipelines (File, MongoDB)
@@ -315,7 +348,7 @@ Defaults are JSONL sink (`news_scraper.sinks.jsonl.JsonlSink`) writing to `./dat
 You may configure sinks via:
 
 - `SINK_CLASS` (full import path string)
-- `SINK_SETTINGS` (dict of kwargs) — can be passed via Scrapy `-s` or via `crawl.py` CLI or environment variables
+- `SINK_SETTINGS` (dict of kwargs) — can be passed via Scrapy `-s`, via the CLI, or environment variables
 
 Examples:
 
@@ -323,8 +356,8 @@ Examples:
 # Using scrapy CLI
 scrapy crawl cnn -s SINK_CLASS=news_scraper.sinks.kafka.KafkaSink -s SINK_SETTINGS='{"bootstrap_servers":"localhost:9092","topic":"raw_news"}'
 
-# Using crawl.py
-python crawl.py --sink-class news_scraper.sinks.mongo.MongoSink --sink-settings '{"uri":"mongodb://localhost:27017","db":"news_db","collection":"raw_news"}'
+# Using the CLI
+python -m news_scraper.cli crawl cnn --sink-class news_scraper.sinks.mongo.MongoSink --sink-settings '{"uri":"mongodb://localhost:27017","db":"news_db","collection":"raw_news"}'
 ```
 
 Notes:
@@ -358,7 +391,7 @@ python -m pip install -e .[mongo]
 
 1. Create a new spider file in `news_scraper/spiders/`.
 2. Inherit from `NewsSpider` and optionally override `is_article_url()` with site-specific URL patterns.
-3. Add the spider to `get_spiders()` in `crawl.py` if you want it included by the default runner.
+3. Add the spider to `get_spiders()` in `news_scraper/cli.py` if you want it included by the default runner.
 
 Example:
 

@@ -8,8 +8,12 @@ def test_bbc_sport_article_url():
     spider = BBCSpider()
 
     # Accept BBC Sport articles
-    assert spider.is_article_url("https://www.bbc.com/sport/articles/c4g5lj59rr9o") is True
-    assert spider.is_article_url("https://www.bbc.com/sport/articles/abc123def456") is True
+    assert (
+        spider.is_article_url("https://www.bbc.com/sport/articles/c4g5lj59rr9o") is True
+    )
+    assert (
+        spider.is_article_url("https://www.bbc.com/sport/articles/abc123def456") is True
+    )
 
     # Accept existing /news/ article patterns
     assert spider.is_article_url("https://www.bbc.com/news/world-12345678") is True
@@ -31,7 +35,9 @@ def test_bbc_rejects_non_article_urls():
     assert spider.is_article_url("https://www.bbc.com/news/av/world-12345678") is False
 
     # Reject live pages
-    assert spider.is_article_url("https://www.bbc.com/news/live/world-12345678") is False
+    assert (
+        spider.is_article_url("https://www.bbc.com/news/live/world-12345678") is False
+    )
 
     # Reject programmes
     assert spider.is_article_url("https://www.bbc.com/programmes/b0abcdef") is False

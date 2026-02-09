@@ -1,166 +1,105 @@
-import argparse
+"""
+DEPRECATED: Use ``python -m news_scraper.cli crawl ...`` instead.
+
+This module is kept for backward compatibility with existing scripts and tests.
+It re-exports helpers from the new CLI and provides a legacy ``main()`` that
+accepts the old-style flags (``--spider``, ``--log-level``, ``--no-crawl``,
+``--sink-class``, ``--sink-settings``).
+"""
+
 import json
 import logging
 import os
-from typing import List, Type
+import sys
+import warnings
 
-import nltk
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
+from scrapy.crawler import CrawlerProcess  # noqa: F401  (mock target)
+from scrapy.utils.project import get_project_settings  # noqa: F401  (mock target)
 
-from news_scraper.spiders import *
-
-
-def ensure_nltk_data() -> None:
-    """Download NLTK tokenizers only if not already present."""
-    required = ["tokenizers/punkt", "tokenizers/punkt_tab"]
-    for resource in required:
-        try:
-            nltk.data.find(resource)
-        except LookupError:
-            # Resource not found, download it
-            name = resource.split("/")[-1]
-            nltk.download(name, quiet=True)
-
-
-# Ensure NLTK tokenizers for article NLP are available when running the crawl
-ensure_nltk_data()
-
-
-def get_spiders() -> List[Type]:
-    """Return the list of spider classes used by the project."""
-    return [
-        CNNSpider,
-        FoxNewsSpider,
-        NBCNewsSpider,
-        BBCSpider,
-        APNewsSpider,
-        GuardianSpider,
-        CBSNewsSpider,
-    ]
-
-
-def build_jsonl_paths(spiders: List[Type], data_dir: str = ".") -> List[str]:
-    """Build JSONL output paths for each spider using its `name` attribute."""
-    if not os.path.exists(os.path.join(data_dir, "data")):
-        os.makedirs(os.path.join(data_dir, "data"), exist_ok=True)
-    return [
-        os.path.join(data_dir, "data", f"{spider.name}_items.jsonl")
-        for spider in spiders
-    ]
+# Re-export helpers so existing imports keep working.
+from news_scraper.cli import build_jsonl_paths, get_spiders  # noqa: F401
 
 
 def main(run_crawl: bool = True) -> None:
-    """Run the Scrapy crawl for the configured spiders.
+    """Legacy entrypoint — backward-compatible with old tests.
 
-    Set `run_crawl=False` to avoid starting Scrapy (useful for tests).
+    Parameters
+    ----------
+    run_crawl:
+        When *False* the crawl is skipped (matches the old test behaviour).
     """
-    parser = argparse.ArgumentParser(description="Run news-scraper crawlers")
-    parser.add_argument(
-        "--spider",
-        dest="spider",
-        help="Run only this spider (by name). If not specified, runs all spiders.",
-    )
-    parser.add_argument(
-        "--sink",
-        dest="sink",
-        choices=["jsonl", "kafka", "mongo"],
-        help="Shorthand for sink class: jsonl, kafka, or mongo",
-    )
-    parser.add_argument(
-        "--jsonl-path",
-        dest="jsonl_path",
-        help="Output path for JSONL sink (requires --sink jsonl)",
-    )
-    parser.add_argument(
-        "--sink-class",
-        dest="sink_class",
-        help="Sink class import path, e.g. news_scraper.sinks.kafka.KafkaSink",
-    )
-    parser.add_argument(
-        "--sink-settings",
-        dest="sink_settings",
-        help="Sink settings as JSON string or comma-separated key=val pairs",
-    )
-    parser.add_argument(
-        "--no-crawl",
-        dest="no_crawl",
-        action="store_true",
-        help="Don't start the crawl (useful for testing)",
-    )
-    parser.add_argument(
-        "--log-level",
-        dest="log_level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-        help="Set logging level for both script and Scrapy (default: INFO)",
+    warnings.warn(
+        "crawl.py is deprecated; use `python -m news_scraper.cli crawl ...` instead.",
+        DeprecationWarning,
+        stacklevel=2,
     )
 
-    args = parser.parse_args()
+    # ---- Parse legacy argv flags ----
+    args = sys.argv[1:]
+    spider_name = None
+    log_level = "INFO"
+    no_crawl = False
+    sink_class = None
+    sink_settings_raw = None
 
-    # Configure logging with the specified level
-    log_level = getattr(logging, args.log_level)
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--spider" and i + 1 < len(args):
+            spider_name = args[i + 1]
+            i += 2
+            continue
+        if arg == "--log-level" and i + 1 < len(args):
+            log_level = args[i + 1]
+            i += 2
+            continue
+        if arg == "--no-crawl":
+            no_crawl = True
+            i += 1
+            continue
+        if arg == "--sink-class" and i + 1 < len(args):
+            sink_class = args[i + 1]
+            i += 2
+            continue
+        if arg == "--sink-settings" and i + 1 < len(args):
+            sink_settings_raw = args[i + 1]
+            i += 2
+            continue
+        i += 1
+
+    # ---- Set up logging ----
+    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
     logging.basicConfig(
-        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=numeric_level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     logger = logging.getLogger(__name__)
 
+    # ---- Resolve spiders ----
     spiders = get_spiders()
-
-    # Filter to specific spider if requested
-    if args.spider:
-        spider_names = {s.name: s for s in spiders}
-        if args.spider not in spider_names:
-            logger.error(f"Unknown spider: {args.spider}")
-            logger.info(f"Available spiders: {list(spider_names.keys())}")
+    if spider_name:
+        spider_map = {s.name: s for s in spiders}
+        if spider_name not in spider_map:
+            logger.error("Unknown spider: %s", spider_name)
             return
-        spiders = [spider_names[args.spider]]
+        spiders = [spider_map[spider_name]]
 
-    logger.info(f"Loaded {len(spiders)} spiders: {[s.name for s in spiders]}")
-
-    # Allow configuring sink via CLI args or environment variables.
+    # ---- Configure Scrapy settings ----
     settings = get_project_settings()
-
-    # Handle --sink shorthand
-    if args.sink:
-        sink_map = {
-            "jsonl": "news_scraper.sinks.jsonl.JSONLSink",
-            "kafka": "news_scraper.sinks.kafka.KafkaSink",
-            "mongo": "news_scraper.sinks.mongo.MongoSink",
-        }
-        sink_class = sink_map[args.sink]
-        settings.set("SINK_CLASS", sink_class, priority="cmdline")
-        logger.info(f"Using sink: {args.sink} ({sink_class})")
-
-        # Handle JSONL path
-        if args.sink == "jsonl" and args.jsonl_path:
-            settings.set("SINK_SETTINGS", {"path": args.jsonl_path}, priority="cmdline")
-            logger.info(f"JSONL output path: {args.jsonl_path}")
-
-    logger.info(f"Using sink class: {settings.get('SINK_CLASS')}")
-
-    # Set Scrapy's log level
-    settings.set("LOG_LEVEL", args.log_level, priority="cmdline")
-    logger.info(f"Set Scrapy log level to: {args.log_level}")
-    # CLI overrides env
-    sink_class = args.sink_class or os.environ.get("SINK_CLASS")
-    sink_settings_val = args.sink_settings or os.environ.get("SINK_SETTINGS")
+    settings.set("LOG_LEVEL", log_level.upper(), priority="cmdline")
 
     if sink_class:
-        logger.info(f"Overriding sink class from CLI: {sink_class}")
         settings.set("SINK_CLASS", sink_class, priority="cmdline")
 
-    if sink_settings_val:
-        # Accept JSON blob or comma-separated key=val pairs
+    if sink_settings_raw:
         parsed = None
-        txt = sink_settings_val.strip()
+        txt = sink_settings_raw.strip()
         if txt.startswith("{"):
             try:
                 parsed = json.loads(txt)
             except Exception:
                 parsed = None
         if parsed is None:
-            # parse key=val,key=val
             parsed = {}
             for part in txt.split(","):
                 if not part:
@@ -168,20 +107,17 @@ def main(run_crawl: bool = True) -> None:
                 if "=" in part:
                     k, v = part.split("=", 1)
                     parsed[k.strip()] = v.strip()
-        logger.info(f"Overriding sink settings from CLI: {parsed}")
         settings.set("SINK_SETTINGS", parsed, priority="cmdline")
 
-    if not args.no_crawl and run_crawl:
-        logger.info("Starting crawl process...")
-        process = CrawlerProcess(settings=settings)
-        for spider in spiders:
-            logger.info(f"Scheduling spider: {spider.name}")
-            process.crawl(spider)
-        logger.info("All spiders scheduled. Starting Scrapy engine...")
-        process.start()
-        logger.info("Crawl completed successfully.")
-    else:
-        logger.info("Crawl skipped (--no-crawl flag or run_crawl=False)")
+    # ---- Crawl ----
+    if no_crawl or not run_crawl:
+        logger.info("Crawl skipped")
+        return
+
+    process = CrawlerProcess(settings=settings)
+    for spider in spiders:
+        process.crawl(spider)
+    process.start()
 
 
 if __name__ == "__main__":

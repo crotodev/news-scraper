@@ -8,9 +8,16 @@ def test_cbs_accepts_news_urls_with_single_slug():
     spider = CBSNewsSpider()
 
     # Accept /news/ with slug
-    assert spider.is_article_url("https://www.cbsnews.com/news/bad-bunny-spotify-super-bowl-halftime-performance/") is True
+    assert (
+        spider.is_article_url(
+            "https://www.cbsnews.com/news/bad-bunny-spotify-super-bowl-halftime-performance/"
+        )
+        is True
+    )
     assert spider.is_article_url("https://www.cbsnews.com/news/short-slug/") is True
-    assert spider.is_article_url("https://www.cbsnews.com/news/test-article-2026/") is True
+    assert (
+        spider.is_article_url("https://www.cbsnews.com/news/test-article-2026/") is True
+    )
 
     # Accept without trailing slash
     assert spider.is_article_url("https://www.cbsnews.com/news/some-article") is True
@@ -47,4 +54,7 @@ def test_cbs_rejects_video_live_essentials():
     assert spider.is_article_url("https://www.cbsnews.com/live/stream/") is False
 
     # Reject essentials
-    assert spider.is_article_url("https://www.cbsnews.com/essentials/best-products/") is False
+    assert (
+        spider.is_article_url("https://www.cbsnews.com/essentials/best-products/")
+        is False
+    )

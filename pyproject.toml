@@ -16,6 +16,7 @@ dependencies = [
   "Scrapy>=2.11.0",
   "newspaper3k",
   "random-user-agent",
+  "typer>=0.9.0",
 ]
 
 [project.scripts]
@@ -38,6 +39,10 @@ kafka = [
   "confluent-kafka>=1.8.2"
 ]
 
+rich = [
+  "rich>=13.0.0",
+]
+
 dev = [
   "pytest>=7.0.0",
   "pytest-cov>=4.0.0",
@@ -48,6 +53,7 @@ all = [
   "pymongo>=3.12",
   "kafka-python>=2.0.2",
   "confluent-kafka>=1.8.2",
+  "rich>=13.0.0",
   "pytest>=7.0.0",
   "pytest-cov>=4.0.0",
   "pytest-mock>=3.10.0",
