@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Generator, Literal
 import hashlib
 from w3lib.url import canonicalize_url
@@ -85,9 +85,9 @@ class NewsSpider(scrapy.Spider):
         item["url"] = response.url
         item["source"] = source
         item["published_at"] = (
-            article.publish_date.isoformat() if article.publish_date else ""
+            article.publish_date.isoformat() if article.publish_date else None
         )
-        item["scraped_at"] = datetime.now().isoformat()
+        item["scraped_at"] = datetime.now(timezone.utc).isoformat()
         item["url_hash"] = url_hash
         item["fingerprint"] = fingerprint
 
